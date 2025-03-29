@@ -36,24 +36,24 @@ export type Database = {
     Tables: {
       bots: {
         Row: {
-          api_key: string
-          balance: number
+          background_story: string | null
+          bot_character_description: string | null
           bot_id: number
           bot_name: string
           created_at: string
           last_active_at: string
         }
         Insert: {
-          api_key: string
-          balance?: number
+          background_story?: string | null
+          bot_character_description?: string | null
           bot_id?: number
           bot_name: string
           created_at?: string
           last_active_at?: string
         }
         Update: {
-          api_key?: string
-          balance?: number
+          background_story?: string | null
+          bot_character_description?: string | null
           bot_id?: number
           bot_name?: string
           created_at?: string

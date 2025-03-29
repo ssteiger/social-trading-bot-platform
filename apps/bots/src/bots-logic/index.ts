@@ -1,0 +1,415 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+	Bot,
+	Company,
+	Database,
+	Order,
+	Shareholding,
+} from "../types/supabase";
+
+export class BotsManager {
+	private supabase: SupabaseClient<Database>;
+	private runningBots: Map<number, NodeJS.Timeout> = new Map();
+
+	constructor(supabaseClient: SupabaseClient<Database>) {
+		this.supabase = supabaseClient;
+	}
+
+	/**
+	 * Get bot details by ID
+	 */
+	async getBotById(botId: number): Promise<Bot | null> {
+		const { data, error } = await this.supabase
+			.from("bots")
+			.select("*")
+			.eq("bot_id", botId)
+			.single();
+
+		if (error || !data) {
+			console.error("Error getting bot:", error);
+			return null;
+		}
+
+		return {
+			botId: data.bot_id,
+			botName: data.bot_name,
+		};
+	}
+
+	/**
+	 * Get all bots from the database
+	 */
+	async getAllBots(): Promise<Bot[]> {
+		const { data, error } = await this.supabase.from("bots").select("*");
+
+		if (error || !data) {
+			console.error("Error getting bots:", error);
+			return [];
+		}
+
+		return data.map((bot) => ({
+			botId: bot.bot_id,
+			botName: bot.bot_name,
+		}));
+	}
+
+	/**
+	 * Create a new bot
+	 */
+	async createBot(botName: string): Promise<Bot | null> {
+		// Generate a random API key
+		const apiKey =
+			Math.random().toString(36).substring(2, 15) +
+			Math.random().toString(36).substring(2, 15);
+
+		const { data, error } = await this.supabase
+			.from("bots")
+			.insert([{ bot_name: botName, api_key: apiKey }])
+			.select()
+			.single();
+
+		if (error || !data) {
+			console.error("Error creating bot:", error);
+			return null;
+		}
+
+		return {
+			botId: data.bot_id,
+			botName: data.bot_name,
+		};
+	}
+
+	/**
+	 * Get all available companies
+	 */
+	async getCompanies(): Promise<Company[]> {
+		const { data, error } = await this.supabase.from("companies").select("*");
+
+		if (error || !data) {
+			console.error("Error getting companies:", error);
+			return [];
+		}
+
+		// Get current prices for all companies
+		const { data: priceData } = await this.supabase
+			.from("current_market_prices")
+			.select("*");
+
+		const priceMap = new Map();
+		if (priceData) {
+			for (const price of priceData) {
+				priceMap.set(price.company_id, price.current_price);
+			}
+		}
+
+		return data.map((company) => ({
+			companyId: company.company_id,
+			companyName: company.company_name,
+			tickerSymbol: company.ticker_symbol,
+			exchangeId: company.exchange_id,
+			currentPrice: priceMap.get(company.company_id) || null,
+		}));
+	}
+
+	/**
+	 * Get shareholdings for a bot
+	 */
+	async getBotShareholdings(botId: number): Promise<Shareholding[]> {
+		const { data, error } = await this.supabase
+			.from("shareholdings")
+			.select("*")
+			.eq("bot_id", botId);
+
+		if (error || !data) {
+			console.error("Error getting shareholdings:", error);
+			return [];
+		}
+
+		return data.map((holding) => ({
+			companyId: holding.company_id,
+			shares: Number(holding.shares),
+			averagePurchasePrice: Number(holding.average_purchase_price),
+		}));
+	}
+
+	/**
+	 * Place a new order
+	 */
+	async placeOrder(botId: number, order: Order): Promise<boolean> {
+		try {
+			// Determine status ID for pending orders
+			const { data: statusData } = await this.supabase
+				.from("order_statuses")
+				.select("status_id")
+				.eq("status_name", "pending")
+				.single();
+
+			if (!statusData) {
+				throw new Error("Could not determine order status ID");
+			}
+
+			// Convert expiresAt Date to ISO string if it exists
+			const expiresAtString = order.expiresAt
+				? order.expiresAt.toISOString()
+				: null;
+
+			// Place the order
+			const { error } = await this.supabase.from("orders").insert([
+				{
+					bot_id: botId,
+					company_id: order.companyId,
+					order_type_id: order.orderTypeId,
+					is_buy: order.isBuy,
+					price: order.price,
+					quantity: order.quantity,
+					status_id: statusData.status_id,
+					expires_at: expiresAtString,
+				},
+			]);
+
+			if (error) {
+				console.error("Error placing order:", error);
+				return false;
+			}
+
+			return true;
+		} catch (err) {
+			console.error("Error in placeOrder:", err);
+			return false;
+		}
+	}
+
+	/**
+	 * Get active orders for a bot
+	 */
+	async getBotActiveOrders(botId: number) {
+		const { data: statusData } = await this.supabase
+			.from("order_statuses")
+			.select("status_id")
+			.in("status_name", ["active", "partially_filled", "pending"]);
+
+		if (!statusData || statusData.length === 0) {
+			return [];
+		}
+
+		const statusIds = statusData.map((s) => s.status_id);
+
+		const { data, error } = await this.supabase
+			.from("orders")
+			.select(`
+        order_id,
+        company_id,
+        order_type_id,
+        is_buy,
+        price,
+        quantity,
+        quantity_filled,
+        status_id,
+        created_at,
+        expires_at
+      `)
+			.eq("bot_id", botId)
+			.in("status_id", statusIds);
+
+		if (error || !data) {
+			console.error("Error getting active orders:", error);
+			return [];
+		}
+
+		return data;
+	}
+
+	/**
+	 * Get market data for a company
+	 */
+	async getCompanyMarketData(companyId: number, limit = 100) {
+		const { data, error } = await this.supabase
+			.from("price_history")
+			.select("*")
+			.eq("company_id", companyId)
+			.eq("period_length", "1min")
+			.order("timestamp", { ascending: false })
+			.limit(limit);
+
+		if (error || !data) {
+			console.error("Error getting market data:", error);
+			return [];
+		}
+
+		return data;
+	}
+
+	/**
+	 * Start a simple trading bot with a strategy
+	 */
+	startTradingBot(botId: number, intervalMs = 60000) {
+		// Don't start if already running
+		if (this.runningBots.has(botId)) {
+			return;
+		}
+
+		console.log(`Starting trading bot ${botId} with interval ${intervalMs}ms`);
+
+		const interval = setInterval(async () => {
+			try {
+				// Get bot details and holdings
+				const bot = await this.getBotById(botId);
+				if (!bot) {
+					console.error(`Bot ${botId} not found`);
+					this.stopTradingBot(botId);
+					return;
+				}
+
+				const holdings = await this.getBotShareholdings(botId);
+				const companies = await this.getCompanies();
+
+				// Simple random trading strategy
+				for (const company of companies) {
+					if (!company.currentPrice) continue;
+
+					// Random decision to buy or sell
+					const randomAction = Math.random();
+
+					// Holding this stock? Consider selling
+					const holding = holdings.find(
+						(h) => h.companyId === company.companyId,
+					);
+
+					if (holding && holding.shares > 0 && randomAction > 0.7) {
+						// Sell some shares
+						const sharesToSell =
+							Math.floor(holding.shares * Math.random() * 0.3) + 1;
+						if (sharesToSell <= 0) continue;
+
+						await this.placeOrder(botId, {
+							companyId: company.companyId,
+							orderTypeId: 1, // Market order
+							isBuy: false,
+							price: company.currentPrice,
+							quantity: sharesToSell,
+						});
+
+						console.log(
+							`Bot ${botId} selling ${sharesToSell} shares of ${company.tickerSymbol} at ${company.currentPrice}`,
+						);
+					}
+					// Consider buying
+					else if (
+						bot.balance > company.currentPrice * 10 &&
+						randomAction < 0.3
+					) {
+						// Buy some shares
+						const maxShares = Math.floor(
+							(bot.balance * 0.1) / company.currentPrice,
+						);
+						const sharesToBuy = Math.floor(Math.random() * maxShares) + 1;
+						if (sharesToBuy <= 0) continue;
+
+						await this.placeOrder(botId, {
+							companyId: company.companyId,
+							orderTypeId: 1, // Market order
+							isBuy: true,
+							price: company.currentPrice,
+							quantity: sharesToBuy,
+						});
+
+						console.log(
+							`Bot ${botId} buying ${sharesToBuy} shares of ${company.tickerSymbol} at ${company.currentPrice}`,
+						);
+					}
+				}
+			} catch (error) {
+				console.error(`Error in trading bot ${botId}:`, error);
+			}
+		}, intervalMs);
+
+		this.runningBots.set(botId, interval);
+	}
+
+	/**
+	 * Stop a trading bot
+	 */
+	stopTradingBot(botId: number) {
+		const interval = this.runningBots.get(botId);
+		if (interval) {
+			clearInterval(interval);
+			this.runningBots.delete(botId);
+			console.log(`Stopped trading bot ${botId}`);
+		}
+	}
+
+	/**
+	 * Create a new company (IPO)
+	 */
+	async createCompany(
+		creatorBotId: number,
+		exchangeId: number,
+		companyName: string,
+		tickerSymbol: string,
+		totalShares: number,
+		initialPrice: number,
+		description?: string,
+	): Promise<number | null> {
+		try {
+			const { data, error } = await this.supabase
+				.from("companies")
+				.insert([
+					{
+						creator_bot_id: creatorBotId,
+						exchange_id: exchangeId,
+						company_name: companyName,
+						ticker_symbol: tickerSymbol,
+						total_shares: totalShares,
+						initial_price: initialPrice,
+						description: description || null,
+					},
+				])
+				.select()
+				.single();
+
+			if (error) {
+				console.error("Error creating company:", error);
+				return null;
+			}
+
+			// Add initial shareholding for creator bot
+			await this.supabase.from("shareholdings").insert([
+				{
+					bot_id: creatorBotId,
+					company_id: data.company_id,
+					shares: totalShares,
+					average_purchase_price: initialPrice,
+				},
+			]);
+
+			return data.company_id;
+		} catch (err) {
+			console.error("Error in createCompany:", err);
+			return null;
+		}
+	}
+
+	async resetDatabase(): Promise<void> {
+		try {
+			// Delete all bot trades
+			await this.supabase.from("trades").delete().not("id", "is", null);
+
+			// Delete all companies created by bots
+			await this.supabase
+				.from("companies")
+				.delete()
+				.match({ created_by_bot: true });
+
+			// Delete all bots
+			await this.supabase.from("bots").delete().not("botId", "is", null);
+
+			console.log("Successfully cleared database tables");
+		} catch (error) {
+			console.error("Error resetting database:", error);
+			throw error;
+		}
+	}
+}
+
+// Re-export the types so they can be imported from this file too
+export type { Bot, Company, Order, Shareholding };

@@ -12,6 +12,11 @@ npm run dev:db
 ```
 
 ```bash
+# run bots locally
+npm run dev:bots
+```
+
+```bash
 # run local web app
 npm run dev:web
 
