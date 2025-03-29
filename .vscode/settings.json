@@ -1,0 +1,34 @@
+{
+	"search.exclude": {
+		"**/.next": true,
+		"**/.nhost": true,
+		"**/node_modules": true
+	},
+	"editor.codeActionsOnSave": {
+		"source.organizeImports.biome": "explicit",
+		"source.sortPackageJson": "explicit"
+	},
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "biomejs.biome",
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome",
+		"editor.formatOnSave": true
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[scss]": {
+		"editor.defaultFormatter": "vscode.css-language-features"
+	},
+	"[css]": {
+		"editor.defaultFormatter": "vscode.css-language-features"
+	},
+	"[mdx]": {
+		"editor.wordWrap": "on"
+	},
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"liveServer.settings.port": 5501,
+	"[sql]": {
+		"editor.defaultFormatter": "adpyke.vscode-sql-formatter"
+	}
+}
