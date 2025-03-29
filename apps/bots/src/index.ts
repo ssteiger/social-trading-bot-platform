@@ -1,4 +1,6 @@
 import { BotsManager } from "./bots-logic";
+import { seedDataToDatabase } from "./seed-scripts";
+import { startBots } from "./startBots";
 import { createSupabaseClient } from "./utils/supabase";
 
 async function startServer() {
@@ -25,15 +27,13 @@ async function startServer() {
 		await botsManager.resetDatabase();
 		console.log("Database reset complete");
 
-		// Get or create initial bots
-		const bots = await botsManager.getAllBots();
+		// Create initial data
+		await seedDataToDatabase(supabase);
 
-		// Start trading bots with different intervals
-		for (const [index, bot] of bots.entries()) {
-			// Different intervals to avoid all bots trading at the same time
-			const interval = 30000 + index * 10000; // 30s, 40s, 50s, etc.
-			botsManager.startTradingBot(bot.botId, interval);
-		}
+		// Start trading bots
+		await startBots(supabase);
+
+		const bots = await botsManager.getAllBots();
 
 		console.log(`Started ${bots.length} trading bots`);
 

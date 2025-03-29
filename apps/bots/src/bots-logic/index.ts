@@ -54,32 +54,6 @@ export class BotsManager {
 	}
 
 	/**
-	 * Create a new bot
-	 */
-	async createBot(botName: string): Promise<Bot | null> {
-		// Generate a random API key
-		const apiKey =
-			Math.random().toString(36).substring(2, 15) +
-			Math.random().toString(36).substring(2, 15);
-
-		const { data, error } = await this.supabase
-			.from("bots")
-			.insert([{ bot_name: botName, api_key: apiKey }])
-			.select()
-			.single();
-
-		if (error || !data) {
-			console.error("Error creating bot:", error);
-			return null;
-		}
-
-		return {
-			botId: data.bot_id,
-			botName: data.bot_name,
-		};
-	}
-
-	/**
 	 * Get all available companies
 	 */
 	async getCompanies(): Promise<Company[]> {
@@ -242,7 +216,7 @@ export class BotsManager {
 	/**
 	 * Start a simple trading bot with a strategy
 	 */
-	startTradingBot(botId: number, intervalMs = 60000) {
+	startTradingBot(botId: number, intervalMs = 1000) {
 		// Don't start if already running
 		if (this.runningBots.has(botId)) {
 			return;
@@ -338,61 +312,10 @@ export class BotsManager {
 		}
 	}
 
-	/**
-	 * Create a new company (IPO)
-	 */
-	async createCompany(
-		creatorBotId: number,
-		exchangeId: number,
-		companyName: string,
-		tickerSymbol: string,
-		totalShares: number,
-		initialPrice: number,
-		description?: string,
-	): Promise<number | null> {
-		try {
-			const { data, error } = await this.supabase
-				.from("companies")
-				.insert([
-					{
-						creator_bot_id: creatorBotId,
-						exchange_id: exchangeId,
-						company_name: companyName,
-						ticker_symbol: tickerSymbol,
-						total_shares: totalShares,
-						initial_price: initialPrice,
-						description: description || null,
-					},
-				])
-				.select()
-				.single();
-
-			if (error) {
-				console.error("Error creating company:", error);
-				return null;
-			}
-
-			// Add initial shareholding for creator bot
-			await this.supabase.from("shareholdings").insert([
-				{
-					bot_id: creatorBotId,
-					company_id: data.company_id,
-					shares: totalShares,
-					average_purchase_price: initialPrice,
-				},
-			]);
-
-			return data.company_id;
-		} catch (err) {
-			console.error("Error in createCompany:", err);
-			return null;
-		}
-	}
-
 	async resetDatabase(): Promise<void> {
 		try {
 			// Delete all bot trades
-			await this.supabase.from("trades").delete().not("id", "is", null);
+			await this.supabase.from("trades").delete().not("trade_id", "is", null);
 
 			// Delete all companies created by bots
 			await this.supabase
@@ -401,7 +324,7 @@ export class BotsManager {
 				.match({ created_by_bot: true });
 
 			// Delete all bots
-			await this.supabase.from("bots").delete().not("botId", "is", null);
+			await this.supabase.from("bots").delete().not("bot_id", "is", null);
 
 			console.log("Successfully cleared database tables");
 		} catch (error) {
