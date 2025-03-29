@@ -1,11 +1,13 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
 	Bot,
 	Company,
-	Database,
 	Order,
 	Shareholding,
-} from "../types/supabase";
+	db,
+	schema,
+} from "@social-trading-bot-platform/db-drizzle";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../types/supabase";
 
 export class BotsManager {
 	private supabase: SupabaseClient<Database>;
@@ -30,10 +32,7 @@ export class BotsManager {
 			return null;
 		}
 
-		return {
-			botId: data.bot_id,
-			botName: data.bot_name,
-		};
+		return data;
 	}
 
 	/**
@@ -47,10 +46,7 @@ export class BotsManager {
 			return [];
 		}
 
-		return data.map((bot) => ({
-			botId: bot.bot_id,
-			botName: bot.bot_name,
-		}));
+		return data;
 	}
 
 	/**
@@ -76,12 +72,10 @@ export class BotsManager {
 			}
 		}
 
+		// Add current price to each company
 		return data.map((company) => ({
-			companyId: company.company_id,
-			companyName: company.company_name,
-			tickerSymbol: company.ticker_symbol,
-			exchangeId: company.exchange_id,
-			currentPrice: priceMap.get(company.company_id) || null,
+			...company,
+			currentPrice: priceMap.get(company.company_id) || company.initial_price,
 		}));
 	}
 
@@ -99,17 +93,13 @@ export class BotsManager {
 			return [];
 		}
 
-		return data.map((holding) => ({
-			companyId: holding.company_id,
-			shares: Number(holding.shares),
-			averagePurchasePrice: Number(holding.average_purchase_price),
-		}));
+		return data;
 	}
 
 	/**
 	 * Place a new order
 	 */
-	async placeOrder(botId: number, order: Order): Promise<boolean> {
+	async placeOrder(botId: number, orderData: Partial<Order>): Promise<boolean> {
 		try {
 			// Determine status ID for pending orders
 			const { data: statusData } = await this.supabase
@@ -123,19 +113,19 @@ export class BotsManager {
 			}
 
 			// Convert expiresAt Date to ISO string if it exists
-			const expiresAtString = order.expiresAt
-				? order.expiresAt.toISOString()
+			const expiresAtString = orderData.expires_at
+				? orderData.expires_at.toISOString()
 				: null;
 
 			// Place the order
 			const { error } = await this.supabase.from("orders").insert([
 				{
 					bot_id: botId,
-					company_id: order.companyId,
-					order_type_id: order.orderTypeId,
-					is_buy: order.isBuy,
-					price: order.price,
-					quantity: order.quantity,
+					company_id: orderData.company_id,
+					order_type_id: orderData.order_type_id,
+					is_buy: orderData.is_buy,
+					price: orderData.price,
+					quantity: orderData.quantity,
 					status_id: statusData.status_id,
 					expires_at: expiresAtString,
 				},
@@ -218,6 +208,8 @@ export class BotsManager {
 	 */
 	startTradingBot(botId: number, intervalMs = 1000) {
 		// Don't start if already running
+		console.log("startTradingBot", { botId: this.runningBots.has(botId) });
+
 		if (this.runningBots.has(botId)) {
 			return;
 		}
@@ -246,7 +238,7 @@ export class BotsManager {
 
 					// Holding this stock? Consider selling
 					const holding = holdings.find(
-						(h) => h.companyId === company.companyId,
+						(h) => h.company_id === company.company_id,
 					);
 
 					if (holding && holding.shares > 0 && randomAction > 0.7) {
@@ -256,15 +248,15 @@ export class BotsManager {
 						if (sharesToSell <= 0) continue;
 
 						await this.placeOrder(botId, {
-							companyId: company.companyId,
-							orderTypeId: 1, // Market order
-							isBuy: false,
+							company_id: company.company_id,
+							order_type_id: 1, // Market order
+							is_buy: false,
 							price: company.currentPrice,
 							quantity: sharesToSell,
 						});
 
 						console.log(
-							`Bot ${botId} selling ${sharesToSell} shares of ${company.tickerSymbol} at ${company.currentPrice}`,
+							`Bot ${botId} selling ${sharesToSell} shares of ${company.ticker_symbol} at ${company.currentPrice}`,
 						);
 					}
 					// Consider buying
@@ -280,15 +272,15 @@ export class BotsManager {
 						if (sharesToBuy <= 0) continue;
 
 						await this.placeOrder(botId, {
-							companyId: company.companyId,
-							orderTypeId: 1, // Market order
-							isBuy: true,
+							company_id: company.company_id,
+							order_type_id: 1, // Market order
+							is_buy: true,
 							price: company.currentPrice,
 							quantity: sharesToBuy,
 						});
 
 						console.log(
-							`Bot ${botId} buying ${sharesToBuy} shares of ${company.tickerSymbol} at ${company.currentPrice}`,
+							`Bot ${botId} buying ${sharesToBuy} shares of ${company.ticker_symbol} at ${company.currentPrice}`,
 						);
 					}
 				}
@@ -317,11 +309,20 @@ export class BotsManager {
 			// Delete all bot trades
 			await this.supabase.from("trades").delete().not("trade_id", "is", null);
 
+			// Delete all orders
+			await this.supabase.from("orders").delete().not("order_id", "is", null);
+
+			// Delete all shareholdings
+			await this.supabase
+				.from("shareholdings")
+				.delete()
+				.not("shareholding_id", "is", null);
+
 			// Delete all companies created by bots
 			await this.supabase
 				.from("companies")
 				.delete()
-				.match({ created_by_bot: true });
+				.not("company_id", "is", null);
 
 			// Delete all bots
 			await this.supabase.from("bots").delete().not("bot_id", "is", null);

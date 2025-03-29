@@ -1,6 +1,6 @@
 {
 	"name": "social-trading-bot-platform",
-	"description": "Social Trading Bots",
+	"description": "Social Trading Bots Platform",
 	"version": "0.1.0",
 	"authors": ["Soeren Steiger <soeren@memberr.de>"],
 	"private": true,

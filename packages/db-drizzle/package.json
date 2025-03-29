@@ -4,12 +4,7 @@
 	"types": "src/index.ts",
 	"type": "module",
 	"scripts": {
-		"db:pull": "npm run --npm drizzle-kit introspect:pg --schema public,auth,storage",
-		"db:generate": "npm run --npm drizzle-kit generate:pg",
-		"db:push": "npm run --npm drizzle-kit push:pg",
-		"db:studio": "npm run --npm drizzle-kit studio",
-		"db:check": "npm run --npm drizzle-kit check:pg",
-		"db:drop": "npm run --npm drizzle-kit drop"
+		"introspect": "npx drizzle-kit introspect:pg"
 	},
 	"dependencies": {
 		"@sinclair/typebox": "^0.34.9",
@@ -20,7 +15,7 @@
 	},
 	"devDependencies": {
 		"drizzle-kit": "^0.28.0",
-		"tsconfig": "workspace:*"
+		"tsx": "^4.19.3"
 	},
 	"peerDependencies": {
 		"typescript": "^5.8.2"

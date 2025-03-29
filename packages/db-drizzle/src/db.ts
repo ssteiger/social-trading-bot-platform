@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import * as schema from "./drizzle/schema";
+import * as postgres from "postgres";
+import * as schema from "./generated/schema";
 
 // Create connection string with fallback
 const connectionString =

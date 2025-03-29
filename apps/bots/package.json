@@ -12,6 +12,7 @@
 		"biome:check-apply": "biome check --apply ."
 	},
 	"dependencies": {
+		"@social-trading-bot-platform/db-drizzle": "file:../../packages/db-drizzle",
 		"@supabase/ssr": "^0.6.1",
 		"@supabase/supabase-js": "^2.49.3",
 		"dotenv": "^16.4.7"

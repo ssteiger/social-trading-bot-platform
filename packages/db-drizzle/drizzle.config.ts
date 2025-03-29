@@ -1,4 +1,4 @@
-import { join } from "path";
+import { join } from "node:path";
 import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
 
@@ -6,10 +6,11 @@ import { defineConfig } from "drizzle-kit";
 config({ path: join(process.cwd(), ".env") });
 
 export default defineConfig({
-	schema: "./src/schema/*.ts",
+	schema: "./src/generated/schema.ts",
 	out: "./src/generated",
 	dialect: "postgresql",
-	schemaFilter: ["public", "auth", "storage"],
+	//casing: "snake_case",
+	schemaFilter: ["public"],
 	dbCredentials: {
 		url:
 			process.env.SUPABASE_DB_URL ||
@@ -18,4 +19,7 @@ export default defineConfig({
 	},
 	verbose: true,
 	strict: true,
+	introspect: {
+		casing: "preserve",
+	},
 });

@@ -42,7 +42,7 @@ async function startServer() {
 			console.log("Shutting down bots server...");
 			// Stop all bots
 			for (const bot of bots) {
-				botsManager.stopTradingBot(bot.botId);
+				botsManager.stopTradingBot(bot.bot_id);
 			}
 			process.exit(0);
 		});
