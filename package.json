@@ -1,29 +1,25 @@
 {
-  "name": "social-trading-bot-platform",
-  "description": "Social Trading Bots",
-  "version": "0.1.0",
-  "authors": [
-    "Soeren Steiger <soeren@memberr.de>"
-  ],
-  "private": true,
-  "packageManager": "npm@10.8.2",
-  "workspaces": [
-    "apps/*"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ssteiger/social-trading-bot-platform"
-  },
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev --parallel",
-    "dev:db": "cd apps/supabase && npx supabase start",
-    "dev:web": "turbo run dev --filter=@social-trading-bot-platform/web",
-    "gen:types": "cd apps/supabase && npm run gen:types",
-    "env:check": "node scripts.js env:check"
-  },
-  "devDependencies": {
-    "supabase": "^2.20.5",
-    "turbo": "^2.4.4"
-  }
+	"name": "social-trading-bot-platform",
+	"description": "Social Trading Bots",
+	"version": "0.1.0",
+	"authors": ["Soeren Steiger <soeren@memberr.de>"],
+	"private": true,
+	"packageManager": "npm@10.8.2",
+	"workspaces": ["apps/*"],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ssteiger/social-trading-bot-platform"
+	},
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev --parallel",
+		"dev:db": "cd apps/supabase && npx supabase start",
+		"dev:web": "turbo run dev --filter=@social-trading-bot-platform/web",
+		"gen:types": "cd apps/supabase && npm run gen:types",
+		"env:check": "node scripts.js env:check"
+	},
+	"devDependencies": {
+		"supabase": "^2.20.5",
+		"turbo": "^2.4.4"
+	}
 }

@@ -16,6 +16,7 @@ type UserAuthFormProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 	const [email, setEmail] = React.useState<string>("");
+	const [verificationCode, setVerificationCode] = React.useState<string>("");
 	const [isEmailSent, setIsEmailSent] = React.useState<boolean>(false);
 	const supabase = createClient();
 
@@ -25,7 +26,7 @@ export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 			const { data, error } = await supabase.auth.signInWithOtp({
 				email,
 				options: {
-					emailRedirectTo: `${window.location.origin}/auth/verify`,
+					emailRedirectTo: `${location.origin}/auth/callback`,
 				},
 			});
 
@@ -37,10 +38,35 @@ export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 		},
 		onSuccess: () => {
 			setIsEmailSent(true);
-			toast.success("Login link sent to your email");
+			toast.success("Login verification code sent to your email");
 		},
 		onError: (error) => {
 			toast.error(`Login failed: ${error.message}`);
+		},
+	});
+
+	// Verification code login mutation
+	const verifyCodeMutation = useMutation({
+		mutationFn: async ({ email, code }: { email: string; code: string }) => {
+			const { data, error } = await supabase.auth.verifyOtp({
+				email,
+				token: code,
+				type: "email",
+			});
+
+			if (error) {
+				throw new Error(error.message);
+			}
+
+			return data;
+		},
+		onSuccess: () => {
+			toast.success("Login successful");
+			// Redirect the user after successful verification
+			window.location.href = "/";
+		},
+		onError: (error) => {
+			toast.error(`Verification failed: ${error.message}`);
 		},
 	});
 
@@ -64,15 +90,26 @@ export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 	});
 
 	// Determine if any mutation is loading
-	const isLoading = loginMutation.isPending || oauthMutation.isPending;
+	const isLoading =
+		loginMutation.isPending ||
+		oauthMutation.isPending ||
+		verifyCodeMutation.isPending;
 
-	// Determine error message from either mutation
+	// Determine error message from any mutation
 	const error =
-		loginMutation.error?.message || oauthMutation.error?.message || null;
+		loginMutation.error?.message ||
+		oauthMutation.error?.message ||
+		verifyCodeMutation.error?.message ||
+		null;
 
 	async function onSubmit(event: React.SyntheticEvent) {
 		event.preventDefault();
 		loginMutation.mutate(email);
+	}
+
+	async function onVerifyCode(event: React.SyntheticEvent) {
+		event.preventDefault();
+		verifyCodeMutation.mutate({ email, code: verificationCode });
 	}
 
 	return (
@@ -85,15 +122,13 @@ export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 
 			{isEmailSent && (
 				<div className="p-3 text-sm text-green-600 rounded-md bg-green-50">
-					Check your email for a login link.
+					Check your email for a login link or verification code.
 				</div>
 			)}
 
-			<form onSubmit={onSubmit}>
-				<div className="grid gap-2">
-					{isEmailSent ? (
-						<></>
-					) : (
+			{!isEmailSent ? (
+				<form onSubmit={onSubmit}>
+					<div className="grid gap-2">
 						<div className="grid gap-1">
 							<Label className="sr-only" htmlFor="email">
 								Email
@@ -111,17 +146,40 @@ export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 								required
 							/>
 						</div>
-					)}
-					{!isEmailSent && (
 						<Button disabled={isLoading} type="submit">
 							{loginMutation.isPending && (
 								<LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
 							)}
 							Send Login Link
 						</Button>
-					)}
-				</div>
-			</form>
+					</div>
+				</form>
+			) : (
+				<form onSubmit={onVerifyCode}>
+					<div className="grid gap-2">
+						<div className="grid gap-1">
+							<Label htmlFor="verificationCode">Verification Code</Label>
+							<Input
+								id="verificationCode"
+								placeholder="Enter the code from your email"
+								type="text"
+								autoCapitalize="none"
+								autoCorrect="off"
+								disabled={isLoading}
+								value={verificationCode}
+								onChange={(e) => setVerificationCode(e.target.value)}
+								required
+							/>
+						</div>
+						<Button disabled={isLoading} type="submit">
+							{verifyCodeMutation.isPending && (
+								<LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+							)}
+							Verify and Login
+						</Button>
+					</div>
+				</form>
+			)}
 
 			{isEmailSent && (
 				<Link href="http://localhost:54324/" target="_blank" rel="noreferrer">

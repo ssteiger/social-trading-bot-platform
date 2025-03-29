@@ -21,6 +21,7 @@ export function UserAuthFormRegister({
 	...props
 }: UserAuthFormProps) {
 	const [email, setEmail] = React.useState<string>("");
+	const [verificationCode, setVerificationCode] = React.useState<string>("");
 	const [isEmailSent, setIsEmailSent] = React.useState<boolean>(false);
 	const router = useRouter();
 	const supabase = createClient();
@@ -31,16 +32,41 @@ export function UserAuthFormRegister({
 			return supabase.auth.signInWithOtp({
 				email,
 				options: {
-					emailRedirectTo: `${window.location.origin}/auth/verify`,
+					emailRedirectTo: `${location.origin}/auth/callback`,
 				},
 			});
 		},
 		onSuccess: () => {
 			setIsEmailSent(true);
-			toast.success("Registration link sent to your email");
+			toast.success("Registration verification code sent to your email");
 		},
 		onError: (error) => {
 			toast.error(`Registration failed: ${error.message}`);
+		},
+	});
+
+	// Verification code registration mutation
+	const verifyCodeMutation = useMutation({
+		mutationFn: async ({ email, code }: { email: string; code: string }) => {
+			const { data, error } = await supabase.auth.verifyOtp({
+				email,
+				token: code,
+				type: "email",
+			});
+
+			if (error) {
+				throw new Error(error.message);
+			}
+
+			return data;
+		},
+		onSuccess: () => {
+			toast.success("Registration successful");
+			// Redirect the user after successful verification
+			window.location.href = "/";
+		},
+		onError: (error) => {
+			toast.error(`Verification failed: ${error.message}`);
 		},
 	});
 
@@ -59,15 +85,27 @@ export function UserAuthFormRegister({
 		},
 	});
 
-	// Combined error from either mutation
+	// Combined error from any mutation
 	const error =
-		emailSignup.error?.message || githubSignIn.error?.message || null;
+		emailSignup.error?.message ||
+		githubSignIn.error?.message ||
+		verifyCodeMutation.error?.message ||
+		null;
+
 	// Combined loading state
-	const isLoading = emailSignup.isPending || githubSignIn.isPending;
+	const isLoading =
+		emailSignup.isPending ||
+		githubSignIn.isPending ||
+		verifyCodeMutation.isPending;
 
 	async function onSubmit(event: React.SyntheticEvent) {
 		event.preventDefault();
 		emailSignup.mutate({ email });
+	}
+
+	async function onVerifyCode(event: React.SyntheticEvent) {
+		event.preventDefault();
+		verifyCodeMutation.mutate({ email, code: verificationCode });
 	}
 
 	return (
@@ -80,15 +118,13 @@ export function UserAuthFormRegister({
 
 			{isEmailSent && (
 				<div className="p-3 text-sm text-green-600 rounded-md bg-green-50">
-					Check your email for a registration link.
+					Check your email for a registration link or verification code.
 				</div>
 			)}
 
-			<form onSubmit={onSubmit}>
-				<div className="grid gap-2">
-					{isEmailSent ? (
-						<></>
-					) : (
+			{!isEmailSent ? (
+				<form onSubmit={onSubmit}>
+					<div className="grid gap-2">
 						<div className="grid gap-1">
 							<Label className="sr-only" htmlFor="email">
 								Email
@@ -106,17 +142,47 @@ export function UserAuthFormRegister({
 								required
 							/>
 						</div>
-					)}
-					{!isEmailSent && (
 						<Button disabled={isLoading} type="submit">
 							{isLoading && (
 								<LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
 							)}
 							Continue with Email
 						</Button>
-					)}
-				</div>
-			</form>
+					</div>
+				</form>
+			) : (
+				<form onSubmit={onVerifyCode}>
+					<div className="grid gap-2">
+						<div className="grid gap-1">
+							<Label htmlFor="verificationCode">Verification Code</Label>
+							<Input
+								id="verificationCode"
+								placeholder="Enter the code from your email"
+								type="text"
+								autoCapitalize="none"
+								autoCorrect="off"
+								disabled={isLoading}
+								value={verificationCode}
+								onChange={(e) => setVerificationCode(e.target.value)}
+								required
+							/>
+						</div>
+						<Button disabled={isLoading} type="submit">
+							{verifyCodeMutation.isPending && (
+								<LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+							)}
+							Verify and Register
+						</Button>
+						<Button
+							variant="outline"
+							type="button"
+							onClick={() => setIsEmailSent(false)}
+						>
+							Back
+						</Button>
+					</div>
+				</form>
+			)}
 
 			{isEmailSent && (
 				<Link href="http://localhost:54324/" target="_blank" rel="noreferrer">

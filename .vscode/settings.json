@@ -8,6 +8,9 @@
 		"source.sortPackageJson": "explicit"
 	},
 	"editor.formatOnSave": true,
+	"editor.detectIndentation": true,
+	"editor.insertSpaces": true,
+	"editor.tabSize": 2,
 	"editor.defaultFormatter": "biomejs.biome",
 	"[typescript]": {
 		"editor.defaultFormatter": "biomejs.biome",
@@ -26,7 +29,6 @@
 		"editor.wordWrap": "on"
 	},
 	"typescript.tsdk": "node_modules/typescript/lib",
-	"liveServer.settings.port": 5501,
 	"[sql]": {
 		"editor.defaultFormatter": "adpyke.vscode-sql-formatter"
 	}

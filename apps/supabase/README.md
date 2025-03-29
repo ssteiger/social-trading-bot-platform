@@ -33,14 +33,27 @@ npx supabase migration new <migration_name>
 # see https://supabase.com/docs/guides/local-development/overview
 ```
 
-## Apple migrations
+## Apply all migrations (resets database)
 
 ```bash
 npx supabase db reset
+```
+
+## Apply migrations
+
+```bash
+supabase migration up
 ```
 
 ## Generate types
 
 ```bash
 npm run gen:types
+```
+
+## After changing email templates
+
+```bash
+# run
+npx supabase start
 ```

@@ -88,11 +88,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
 						<NavigationMenu>
 							<NavigationMenuList>
 								<NavigationMenuItem>
-									<Link href="/home" legacyBehavior passHref>
+									<Link href="/dashboard" legacyBehavior passHref>
 										<NavigationMenuLink
 											className={navigationMenuTriggerStyle()}
 										>
-											Home
+											Dashboard
 										</NavigationMenuLink>
 									</Link>
 								</NavigationMenuItem>

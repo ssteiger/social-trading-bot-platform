@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import MainLayout from "@/components/layouts/main";
 import QueryClientProvider from "@/components/providers/query-client-provider";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Toaster } from "sonner";
 
@@ -35,14 +36,20 @@ export default function RootLayout({
 				<QueryClientProvider>
 					<MainLayout>
 						{/* Local DB Button */}
-						<Link
-							href="http://127.0.0.1:54323/project/default"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="fixed bottom-2 right-2 z-50 bg-fuchsia-400 hover:bg-fuchsia-400/80 text-white text-xs px-2 py-1 rounded shadow-md transition-colors"
+						<Button
+							asChild
+							variant="outline"
+							size="sm"
+							className="fixed top-2 left-2 z-50"
 						>
-							local db
-						</Link>
+							<Link
+								href="http://127.0.0.1:54323/project/default"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								local db
+							</Link>
+						</Button>
 						{children}
 					</MainLayout>
 				</QueryClientProvider>
