@@ -8,15 +8,6 @@ import { useEffect, useState } from "react";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { Button } from "@/components/ui/button";
 import { ChartAreaInteractive } from "@/components/ui/chart-area-interactive";
-import {
-	NavigationMenu,
-	NavigationMenuItem,
-	NavigationMenuLink,
-	NavigationMenuList,
-	navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import { SectionCards } from "@/components/ui/section-cards";
-import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/ui/site-header";
 import { ThemeToggle } from "./theme-toggle";
@@ -55,14 +46,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
 			subscription.unsubscribe();
 		};
 	}, [supabase]);
-
-	const handleLogout = async () => {
-		// Sign out using Supabase
-		const { error } = await supabase.auth.signOut();
-		if (!error) {
-			router.push("/");
-		}
-	};
 
 	// Skip layout rendering for auth pages
 	if (pathname?.startsWith("/auth")) {
