@@ -131,7 +131,7 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
 
 						// Process each open order
 						for (const order of openOrders) {
-							console.log(`Processing order ${order.order_id}`);
+							//console.log(`Processing order ${order.order_id}`);
 							// For sell orders, check if bot has enough cash (simplified)
 							// For buy orders, check if bot has enough shares
 							const canMatch = order.is_buy
@@ -142,7 +142,7 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
 									)
 								: true; // Assume bot has enough cash for buy orders
 
-							console.log(`Can match order ${order.order_id}: ${canMatch}`);
+							//console.log(`Can match order ${order.order_id}: ${canMatch}`);
 							if (canMatch) {
 								console.log(
 									`Creating matching counter-order for order ${order.order_id}`,

@@ -205,7 +205,7 @@ export const price_history = pgTable("price_history", {
 	period_length: varchar({ length: 20 }).notNull(),
 }, (table) => {
 	return {
-		idx_price_history_company_timestamp: index("idx_price_history_company_timestamp").using("btree", table.company_id.asc().nullsLast().op("timestamp_ops"), table.timestamp.asc().nullsLast().op("timestamp_ops")),
+		idx_price_history_company_timestamp: index("idx_price_history_company_timestamp").using("btree", table.company_id.asc().nullsLast().op("text_ops"), table.timestamp.asc().nullsLast().op("text_ops")),
 		price_history_company_id_fkey: foreignKey({
 			columns: [table.company_id],
 			foreignColumns: [company.company_id],

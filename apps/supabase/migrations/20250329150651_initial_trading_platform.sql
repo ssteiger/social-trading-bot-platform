@@ -428,10 +428,10 @@ CREATE OR REPLACE FUNCTION update_price_history() RETURNS TRIGGER AS $$
 DECLARE
     current_period TIMESTAMP;
     period_exists BOOLEAN;
-    high_price_in_cents BIGINT;
-    low_price_in_cents BIGINT;
-    open_price_in_cents BIGINT;
-    volume BIGINT;
+    current_high_price_in_cents BIGINT;
+    current_low_price_in_cents BIGINT;
+    current_open_price_in_cents BIGINT;
+    current_volume BIGINT;
 BEGIN
     -- Round the timestamp to the nearest minute for 1-minute candles
     current_period := date_trunc('minute', NEW.executed_at);
@@ -448,7 +448,7 @@ BEGIN
         -- Update existing record
         -- Get current high and low
         SELECT ph.high_price_in_cents, ph.low_price_in_cents, ph.open_price_in_cents, ph.volume
-        INTO high_price_in_cents, low_price_in_cents, open_price_in_cents, volume
+        INTO current_high_price_in_cents, current_low_price_in_cents, current_open_price_in_cents, current_volume
         FROM price_history ph
         WHERE company_id = NEW.company_id
         AND timestamp = current_period
@@ -457,9 +457,9 @@ BEGIN
         -- Update record
         UPDATE price_history
         SET close_price_in_cents = NEW.price_in_cents,
-            high_price_in_cents = GREATEST(high_price_in_cents, NEW.price_in_cents),
-            low_price_in_cents = LEAST(low_price_in_cents, NEW.price_in_cents),
-            volume = volume + NEW.quantity
+            high_price_in_cents = GREATEST(current_high_price_in_cents, NEW.price_in_cents),
+            low_price_in_cents = LEAST(current_low_price_in_cents, NEW.price_in_cents),
+            volume = current_volume + NEW.quantity
         WHERE company_id = NEW.company_id
         AND timestamp = current_period
         AND period_length = '1min';

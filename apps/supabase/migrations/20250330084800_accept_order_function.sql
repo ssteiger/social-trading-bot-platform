@@ -137,35 +137,5 @@ BEGIN
       VALUES (p_accepting_bot_id, v_company_id, p_quantity, v_price_in_cents, NOW());
     END IF;
   END IF;
-  
-  -- Add price history update (for market data)
-  INSERT INTO price_history (
-    company_id,
-    exchange_id,
-    timestamp,
-    open_price_in_cents,
-    close_price_in_cents,
-    high_price_in_cents,
-    low_price_in_cents,
-    volume,
-    period_length
-  )
-  VALUES (
-    v_company_id,
-    v_exchange_id,
-    date_trunc('minute', NOW()),
-    v_price_in_cents,
-    v_price_in_cents,
-    v_price_in_cents,
-    v_price_in_cents,
-    p_quantity,
-    '1min'
-  )
-  ON CONFLICT (company_id, timestamp, period_length) 
-  DO UPDATE SET
-    close_price_in_cents = v_price_in_cents,
-    high_price_in_cents = GREATEST(price_history.high_price_in_cents, v_price_in_cents),
-    low_price_in_cents = LEAST(price_history.low_price_in_cents, v_price_in_cents),
-    volume = price_history.volume + p_quantity;
 END;
 $$ LANGUAGE plpgsql;
