@@ -74,14 +74,8 @@ export default function DashboardPage() {
 
 	return (
 		<div className="flex-1 space-y-4 p-8 pt-6">
-			<Card>
-				<CardHeader>
-					<CardTitle>Registered Traders</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<DataTable data={companyData || []} columns={columns} />
-				</CardContent>
-			</Card>
+			<CardTitle>Registered Traders</CardTitle>
+			<DataTable data={companyData || []} columns={columns} />
 		</div>
 	);
 }

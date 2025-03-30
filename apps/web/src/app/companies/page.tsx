@@ -78,22 +78,12 @@ export default function CompanyPage() {
 	return (
 		<>
 			<div className="flex-1 space-y-4 p-8 pt-6">
-				<Card>
-					<CardHeader>
-						<CardTitle>Publicly Listed Companies</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<DataTable
-							data={companyData || []}
-							columns={columns}
-							searchableColumns={[
-								"ticker_symbol",
-								"company_name",
-								"exchange_id",
-							]}
-						/>
-					</CardContent>
-				</Card>
+				<CardTitle>Publicly Listed Companies</CardTitle>
+				<DataTable
+					data={companyData || []}
+					columns={columns}
+					searchableColumns={["ticker_symbol", "company_name", "exchange_id"]}
+				/>
 			</div>
 		</>
 	);

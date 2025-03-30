@@ -1,57 +1,20 @@
-"use client";
+import { AppSidebar } from "@/components/ui/app-sidebar";
+import { ChartAreaInteractive } from "@/components/ui/chart-area-interactive";
+import { SectionCards } from "@/components/ui/section-cards";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SiteHeader } from "@/components/ui/site-header";
+import { DataTable } from "./components/data-table";
 
-import { DataTable } from "@/components/ui/data-table";
-import { createClient } from "@/utils/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import data from "./data.json";
 
-const columns = [
-	{
-		header: "id",
-		accessorKey: "id",
-	},
-	{
-		header: "Email",
-		accessorKey: "email",
-	},
-	{
-		header: "Created At",
-		accessorKey: "created_at",
-	},
-];
-
-export default function Home() {
-	// Use react-query to fetch data from Supabase
-	const { data, isLoading, error } = useQuery({
-		queryKey: ["home"],
-		queryFn: async () => {
-			const supabase = createClient();
-			const { data, error } = await supabase
-				.from("trade")
-				.select("*")
-				.limit(100);
-
-			if (error) {
-				throw new Error(error.message);
-			}
-
-			return data || [];
-		},
-	});
-
-	console.log({ data });
-
-	// Show error state
-	if (error)
-		return (
-			<div>
-				Error: {error instanceof Error ? error.message : "Unknown error"}
-			</div>
-		);
-
+export default function HomePage() {
 	return (
-		<div className="container py-8 mx-auto">
-			<h1 className="mb-6 text-3xl font-bold">Welcome Home</h1>
-			<DataTable data={data || []} columns={columns} />
+		<div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+			<SectionCards />
+			<div className="px-4 lg:px-6">
+				<ChartAreaInteractive />
+			</div>
+			<DataTable data={data} />
 		</div>
 	);
 }

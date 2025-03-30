@@ -42,24 +42,7 @@ export default function RootLayout({
 					disableTransitionOnChange
 				>
 					<QueryClientProvider>
-						<MainLayout>
-							{/* Local DB Button */}
-							<Button
-								asChild
-								variant="outline"
-								size="sm"
-								className="fixed top-2 left-2 z-50"
-							>
-								<Link
-									href="http://127.0.0.1:54323/project/default"
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									local db
-								</Link>
-							</Button>
-							{children}
-						</MainLayout>
+						<MainLayout>{children}</MainLayout>
 					</QueryClientProvider>
 				</ThemeProvider>
 			</body>

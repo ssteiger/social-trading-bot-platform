@@ -57,31 +57,29 @@ export default function DashboardPage() {
 			{isLoading ? (
 				<div className="grid grid-cols-1 gap-4">
 					{[...Array(4)].map((_, i) => (
-						<Card key={i}>
-							<CardHeader>
+						<div key={`skeleton-${i}`} className="border rounded-lg p-4">
+							<div className="mb-4">
 								<Skeleton className="h-6 w-1/3" />
-							</CardHeader>
-							<CardContent>
-								<Skeleton className="h-[200px] w-full" />
-							</CardContent>
-						</Card>
+							</div>
+							<Skeleton className="h-[200px] w-full" />
+						</div>
 					))}
 				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-4">
 					{companyData && companyData.length > 0 ? (
 						companyData.map((company) => (
-							<Card key={company.company_id}>
-								<CardHeader>
-									<CardTitle>{company.company_name}</CardTitle>
-									<CardDescription>
+							<div key={company.company_id} className="border rounded-lg p-4">
+								<div className="mb-4">
+									<h3 className="text-lg font-semibold">
+										{company.company_name}
+									</h3>
+									<p className="text-sm text-muted-foreground">
 										Symbol: {company.company_id}
-									</CardDescription>
-								</CardHeader>
-								<CardContent>
-									<PriceChart companyId={company.company_id} />
-								</CardContent>
-							</Card>
+									</p>
+								</div>
+								<PriceChart companyId={company.company_id} />
+							</div>
 						))
 					) : (
 						<div className="col-span-full text-center py-8">

@@ -88,7 +88,7 @@ export function PriceChart({ companyId }: { companyId: string }) {
 		return (
 			<div className="w-full">
 				<div className="pb-2">
-					<div className="text-lg font-medium">Price Chart</div>
+					<div />
 					<Skeleton className="h-4 w-[250px]" />
 				</div>
 				<div>
@@ -102,7 +102,7 @@ export function PriceChart({ companyId }: { companyId: string }) {
 		<div className="w-full">
 			<div className="pb-2">
 				<div className="flex justify-between items-center">
-					<div className="text-lg font-medium">Price Chart</div>
+					<div />
 					<div className="flex items-center gap-2">
 						<span className="text-2xl font-bold">
 							$

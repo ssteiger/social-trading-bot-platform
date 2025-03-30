@@ -110,14 +110,8 @@ export default function OrderBookPage() {
 
 	return (
 		<div className="flex-1 space-y-4 p-8 pt-6">
-			<Card>
-				<CardHeader>
-					<CardTitle>Order Book</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<DataTable data={companyData || []} columns={columns} />
-				</CardContent>
-			</Card>
+			<CardTitle>Order Book</CardTitle>
+			<DataTable data={companyData || []} columns={columns} />
 		</div>
 	);
 }
