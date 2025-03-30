@@ -10,7 +10,7 @@ import { OrderService } from "./services/OrderService";
 import { TradingService } from "./services/TradingService";
 
 // Re-export all types
-export * from "./types";
+export * from "../../types/enums";
 
 export class BotsManager {
 	private supabase: SupabaseClient<Database>;

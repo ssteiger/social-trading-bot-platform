@@ -13,8 +13,6 @@ export type {
 	NewTrade,
 	Order,
 	OrderBook,
-	OrderStatus,
-	OrderType,
 	PriceHistory,
 	Shareholding,
 	Trade,

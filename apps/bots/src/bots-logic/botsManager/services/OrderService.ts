@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { BotsManager } from "..";
+import type { NewOrder } from "../../../types/drizzle";
 import type { Database } from "../../../types/supabase";
-import type { NewOrder, Order } from "../types";
 
 export class OrderService {
 	private supabase: SupabaseClient<Database>;

@@ -1,9 +1,6 @@
-import {
-	OrderStatusEnum,
-	OrderTypeEnum,
-} from "@social-trading-bot-platform/db-drizzle";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { BotsManager, type NewOrder } from "./bots-logic/botsManager";
+import { BotsManager } from "./bots-logic/botsManager";
+import { OrderStatusEnum, OrderTypeEnum } from "./types/enums";
 import type { Database } from "./types/supabase";
 
 async function startSimpleBots(supabase: SupabaseClient<Database>) {

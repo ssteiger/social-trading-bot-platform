@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Bot, Shareholding } from "../../../types/drizzle";
 import type { Database } from "../../../types/supabase";
-import type { Bot, Shareholding } from "../types";
 
 export class BotService {
 	private supabase: SupabaseClient<Database>;

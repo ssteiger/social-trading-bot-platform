@@ -12,16 +12,13 @@ import type {
 	NewTrade,
 	Order,
 	OrderBook,
-	OrderStatus,
-	OrderStatusEnum,
-	OrderType,
-	OrderTypeEnum,
 	PriceHistory,
 	Shareholding,
 	Trade,
 	db,
 	schema,
-} from "@social-trading-bot-platform/db-drizzle";
+} from "../types/drizzle";
+import { OrderStatusEnum } from "../types/enums";
 import type { BotsManager } from "./botsManager";
 
 /**

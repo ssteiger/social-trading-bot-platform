@@ -20,27 +20,6 @@ export type CurrentMarketPrice = InferSelectModel<
 >;
 export type OrderBook = InferSelectModel<typeof schema.order_book>;
 
-// Export enums for OrderType and OrderStatus
-export const OrderTypeEnum = {
-	MARKET: "market",
-	LIMIT: "limit",
-	STOP: "stop",
-} as const;
-
-export type OrderType = (typeof OrderTypeEnum)[keyof typeof OrderTypeEnum];
-
-export const OrderStatusEnum = {
-	PENDING: "pending",
-	ACTIVE: "active",
-	FILLED: "filled",
-	PARTIALLY_FILLED: "partially_filled",
-	CANCELLED: "cancelled",
-	EXPIRED: "expired",
-} as const;
-
-export type OrderStatus =
-	(typeof OrderStatusEnum)[keyof typeof OrderStatusEnum];
-
 // Export insert types (for creating new records)
 export type NewCompany = InferInsertModel<typeof schema.company>;
 export type NewExchange = InferInsertModel<typeof schema.exchange>;

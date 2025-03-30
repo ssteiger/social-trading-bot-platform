@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Company, PriceHistory } from "../../../types/drizzle";
 import type { Database } from "../../../types/supabase";
-import type { Company, PriceHistory } from "../types";
 
 export class CompanyService {
 	private supabase: SupabaseClient<Database>;
