@@ -113,7 +113,7 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
 						.from("order")
 						.select("*")
 						.neq("bot_id", bot.bot_id)
-						.eq("status", "active") // Active status
+						.eq("status", OrderStatusEnum.ACTIVE) // Use enum value instead of string
 						.gt("quantity_open", 0);
 
 					if (error) {

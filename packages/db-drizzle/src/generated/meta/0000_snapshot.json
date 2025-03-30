@@ -352,8 +352,7 @@
         },
         "order_type": {
           "name": "order_type",
-          "type": "order_type_enum",
-          "typeSchema": "public",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -394,8 +393,7 @@
         },
         "status": {
           "name": "status",
-          "type": "order_status_enum",
-          "typeSchema": "public",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
@@ -461,7 +459,7 @@
               "expression": "status",
               "asc": true,
               "nulls": "last",
-              "opclass": "enum_ops",
+              "opclass": "text_ops",
               "isExpression": false
             }
           ],
@@ -499,8 +497,74 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "order_order_type_fkey": {
+          "name": "order_order_type_fkey",
+          "tableFrom": "order",
+          "tableTo": "order_type",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "order_type"
+          ],
+          "columnsTo": [
+            "order_type"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "order_status_fkey": {
+          "name": "order_status_fkey",
+          "tableFrom": "order",
+          "tableTo": "order_status",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "status"
+          ],
+          "columnsTo": [
+            "order_status"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.order_type": {
+      "name": "order_type",
+      "schema": "",
+      "columns": {
+        "order_type": {
+          "name": "order_type",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.order_status": {
+      "name": "order_status",
+      "schema": "",
+      "columns": {
+        "order_status": {
+          "name": "order_status",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {},
@@ -842,29 +906,7 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {
-    "public.order_status_enum": {
-      "name": "order_status_enum",
-      "values": [
-        "pending",
-        "active",
-        "filled",
-        "partially_filled",
-        "cancelled",
-        "expired"
-      ],
-      "schema": "public"
-    },
-    "public.order_type_enum": {
-      "name": "order_type_enum",
-      "values": [
-        "market",
-        "limit",
-        "stop"
-      ],
-      "schema": "public"
-    }
-  },
+  "enums": {},
   "schemas": {},
   "sequences": {},
   "roles": {},
@@ -924,7 +966,7 @@
         }
       },
       "isExisting": false,
-      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM \"order\" o JOIN company c ON o.company_id = c.company_id JOIN exchange e ON c.exchange_id = e.exchange_id WHERE o.status = 'active'::order_status_enum GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC",
+      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM \"order\" o JOIN company c ON o.company_id = c.company_id JOIN exchange e ON c.exchange_id = e.exchange_id WHERE o.status = 'active'::text GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC",
       "materialized": false
     },
     "public.current_market_price": {
@@ -981,7 +1023,7 @@
         }
       },
       "isExisting": false,
-      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, ( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = true AND \"order\".status = 'active'::order_status_enum AND \"order\".quantity_open > 0) AS bid_price, ( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = false AND \"order\".status = 'active'::order_status_enum AND \"order\".quantity_open > 0) AS ask_price, (( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = false AND \"order\".status = 'active'::order_status_enum AND \"order\".quantity_open > 0)) - (( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = true AND \"order\".status = 'active'::order_status_enum AND \"order\".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id = c.company_id ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id = e.exchange_id",
+      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, ( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = true AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0) AS bid_price, ( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = false AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0) AS ask_price, (( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = false AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0)) - (( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = true AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id = c.company_id ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id = e.exchange_id",
       "materialized": false
     }
   },

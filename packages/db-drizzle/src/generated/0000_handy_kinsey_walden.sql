@@ -1,8 +1,6 @@
 -- Current sql file was generated after introspecting the database
 -- If you want to run this migration please uncomment this code before executing migrations
 /*
-CREATE TYPE "public"."order_status_enum" AS ENUM('pending', 'active', 'filled', 'partially_filled', 'cancelled', 'expired');--> statement-breakpoint
-CREATE TYPE "public"."order_type_enum" AS ENUM('market', 'limit', 'stop');--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "bot" (
 	"bot_id" serial PRIMARY KEY NOT NULL,
 	"bot_name" varchar(100) NOT NULL,
@@ -49,16 +47,24 @@ CREATE TABLE IF NOT EXISTS "order" (
 	"order_id" serial PRIMARY KEY NOT NULL,
 	"bot_id" integer NOT NULL,
 	"company_id" integer NOT NULL,
-	"order_type" "order_type_enum" NOT NULL,
+	"order_type" text NOT NULL,
 	"is_buy" boolean NOT NULL,
 	"price_in_cents" bigint NOT NULL,
 	"quantity" bigint NOT NULL,
 	"quantity_filled" bigint DEFAULT 0 NOT NULL,
 	"quantity_open" bigint GENERATED ALWAYS AS ((quantity - quantity_filled)) STORED,
-	"status" "order_status_enum" DEFAULT 'pending' NOT NULL,
+	"status" text DEFAULT 'pending' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"expires_at" timestamp,
 	"last_updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "order_type" (
+	"order_type" text PRIMARY KEY NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "order_status" (
+	"order_status" text PRIMARY KEY NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "trade" (
@@ -126,6 +132,18 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
+ ALTER TABLE "order" ADD CONSTRAINT "order_order_type_fkey" FOREIGN KEY ("order_type") REFERENCES "public"."order_type"("order_type") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "order" ADD CONSTRAINT "order_status_fkey" FOREIGN KEY ("status") REFERENCES "public"."order_status"("order_status") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "trade" ADD CONSTRAINT "trade_exchange_id_fkey" FOREIGN KEY ("exchange_id") REFERENCES "public"."exchange"("exchange_id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
@@ -176,10 +194,10 @@ END $$;
 CREATE INDEX IF NOT EXISTS "idx_shareholding_bot_id" ON "shareholding" USING btree ("bot_id" int4_ops);--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_order_bot_id" ON "order" USING btree ("bot_id" int4_ops);--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_order_company_id" ON "order" USING btree ("company_id" int4_ops);--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "idx_order_status" ON "order" USING btree ("status" enum_ops);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_order_status" ON "order" USING btree ("status" text_ops);--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_trade_company_id" ON "trade" USING btree ("company_id" int4_ops);--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_trade_executed_at" ON "trade" USING btree ("executed_at" timestamp_ops);--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_price_history_company_timestamp" ON "price_history" USING btree ("company_id" int4_ops,"timestamp" timestamp_ops);--> statement-breakpoint
-CREATE VIEW "public"."order_book" AS (SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM "order" o JOIN company c ON o.company_id = c.company_id JOIN exchange e ON c.exchange_id = e.exchange_id WHERE o.status = 'active'::order_status_enum GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC);--> statement-breakpoint
-CREATE VIEW "public"."current_market_price" AS (SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, ( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::order_status_enum AND "order".quantity_open > 0) AS bid_price, ( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::order_status_enum AND "order".quantity_open > 0) AS ask_price, (( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::order_status_enum AND "order".quantity_open > 0)) - (( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::order_status_enum AND "order".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id = c.company_id ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id = e.exchange_id);
+CREATE VIEW "public"."order_book" AS (SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM "order" o JOIN company c ON o.company_id = c.company_id JOIN exchange e ON c.exchange_id = e.exchange_id WHERE o.status = 'active'::text GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC);--> statement-breakpoint
+CREATE VIEW "public"."current_market_price" AS (SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, ( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::text AND "order".quantity_open > 0) AS bid_price, ( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::text AND "order".quantity_open > 0) AS ask_price, (( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::text AND "order".quantity_open > 0)) - (( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::text AND "order".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id = c.company_id ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id = e.exchange_id);
 */

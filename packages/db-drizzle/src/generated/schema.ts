@@ -1,8 +1,6 @@
-import { pgTable, serial, varchar, timestamp, text, bigint, foreignKey, unique, integer, numeric, boolean, index, pgView, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, timestamp, text, bigint, foreignKey, unique, integer, numeric, boolean, index, pgView } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
-export const order_status_enum = pgEnum("order_status_enum", ['pending', 'active', 'filled', 'partially_filled', 'cancelled', 'expired'])
-export const order_type_enum = pgEnum("order_type_enum", ['market', 'limit', 'stop'])
 
 
 export const bot = pgTable("bot", {
@@ -85,7 +83,7 @@ export const order = pgTable("order", {
 	order_id: serial().primaryKey().notNull(),
 	bot_id: integer().notNull(),
 	company_id: integer().notNull(),
-	order_type: order_type_enum().notNull(),
+	order_type: text().notNull(),
 	is_buy: boolean().notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	price_in_cents: bigint({ mode: "number" }).notNull(),
@@ -95,7 +93,7 @@ export const order = pgTable("order", {
 	quantity_filled: bigint({ mode: "number" }).default(0).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	quantity_open: bigint({ mode: "number" }).generatedAlwaysAs(sql`(quantity - quantity_filled)`),
-	status: order_status_enum().default('pending').notNull(),
+	status: text().default('pending').notNull(),
 	created_at: timestamp({ mode: 'string' }).defaultNow().notNull(),
 	expires_at: timestamp({ mode: 'string' }),
 	last_updated_at: timestamp({ mode: 'string' }).defaultNow().notNull(),
@@ -103,7 +101,7 @@ export const order = pgTable("order", {
 	return {
 		idx_order_bot_id: index("idx_order_bot_id").using("btree", table.bot_id.asc().nullsLast().op("int4_ops")),
 		idx_order_company_id: index("idx_order_company_id").using("btree", table.company_id.asc().nullsLast().op("int4_ops")),
-		idx_order_status: index("idx_order_status").using("btree", table.status.asc().nullsLast().op("enum_ops")),
+		idx_order_status: index("idx_order_status").using("btree", table.status.asc().nullsLast().op("text_ops")),
 		order_bot_id_fkey: foreignKey({
 			columns: [table.bot_id],
 			foreignColumns: [bot.bot_id],
@@ -114,7 +112,25 @@ export const order = pgTable("order", {
 			foreignColumns: [company.company_id],
 			name: "order_company_id_fkey"
 		}),
+		order_order_type_fkey: foreignKey({
+			columns: [table.order_type],
+			foreignColumns: [order_type.order_type],
+			name: "order_order_type_fkey"
+		}),
+		order_status_fkey: foreignKey({
+			columns: [table.status],
+			foreignColumns: [order_status.order_status],
+			name: "order_status_fkey"
+		}),
 	}
+});
+
+export const order_type = pgTable("order_type", {
+	order_type: text().primaryKey().notNull(),
+});
+
+export const order_status = pgTable("order_status", {
+	order_status: text().primaryKey().notNull(),
 });
 
 export const trade = pgTable("trade", {
@@ -210,7 +226,7 @@ export const order_book = pgView("order_book", {	company_id: integer(),
 	price_in_cents: bigint({ mode: "number" }),
 	total_quantity: numeric(),
 	oldest_order_time: timestamp({ mode: 'string' }),
-}).as(sql`SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM "order" o JOIN company c ON o.company_id = c.company_id JOIN exchange e ON c.exchange_id = e.exchange_id WHERE o.status = 'active'::order_status_enum GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC`);
+}).as(sql`SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM "order" o JOIN company c ON o.company_id = c.company_id JOIN exchange e ON c.exchange_id = e.exchange_id WHERE o.status = 'active'::text GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC`);
 
 export const current_market_price = pgView("current_market_price", {	company_id: integer(),
 	ticker_symbol: varchar({ length: 10 }),
@@ -223,4 +239,4 @@ export const current_market_price = pgView("current_market_price", {	company_id:
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	spread: bigint({ mode: "number" }),
 	last_trade_time: timestamp({ mode: 'string' }),
-}).as(sql`SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, ( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::order_status_enum AND "order".quantity_open > 0) AS bid_price, ( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::order_status_enum AND "order".quantity_open > 0) AS ask_price, (( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::order_status_enum AND "order".quantity_open > 0)) - (( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::order_status_enum AND "order".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id = c.company_id ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id = e.exchange_id`);
+}).as(sql`SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, ( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::text AND "order".quantity_open > 0) AS bid_price, ( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::text AND "order".quantity_open > 0) AS ask_price, (( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::text AND "order".quantity_open > 0)) - (( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::text AND "order".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id = c.company_id ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id = e.exchange_id`);

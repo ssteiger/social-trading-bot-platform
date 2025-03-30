@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { bot, company, exchange, shareholding, order, trade, price_history } from "./schema";
+import { bot, company, exchange, shareholding, order, order_type, order_status, trade, price_history } from "./schema";
 
 export const companyRelations = relations(company, ({one, many}) => ({
 	bot: one(bot, {
@@ -54,12 +54,28 @@ export const orderRelations = relations(order, ({one, many}) => ({
 		fields: [order.company_id],
 		references: [company.company_id]
 	}),
+	order_type: one(order_type, {
+		fields: [order.order_type],
+		references: [order_type.order_type]
+	}),
+	order_status: one(order_status, {
+		fields: [order.status],
+		references: [order_status.order_status]
+	}),
 	trades_buy_order_id: many(trade, {
 		relationName: "trade_buy_order_id_order_order_id"
 	}),
 	trades_sell_order_id: many(trade, {
 		relationName: "trade_sell_order_id_order_order_id"
 	}),
+}));
+
+export const order_typeRelations = relations(order_type, ({many}) => ({
+	orders: many(order),
+}));
+
+export const order_statusRelations = relations(order_status, ({many}) => ({
+	orders: many(order),
 }));
 
 export const tradeRelations = relations(trade, ({one}) => ({

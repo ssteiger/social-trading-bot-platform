@@ -139,7 +139,7 @@ export class TradingStrategy {
 				bot_id: botId,
 				company_id: companyId,
 				order_type: "limit", // Assuming 1 is limit order
-				status: OrderStatusEnum.ACTIVE,
+				//status: OrderStatusEnum.ACTIVE,
 				is_buy: isBuy,
 				price_in_cents,
 				quantity: quantity,

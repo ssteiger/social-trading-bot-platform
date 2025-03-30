@@ -148,12 +148,12 @@ export type Database = {
           is_buy: boolean
           last_updated_at: string
           order_id: number
-          order_type: Database["public"]["Enums"]["order_type_enum"]
+          order_type: string
           price_in_cents: number
           quantity: number
           quantity_filled: number
           quantity_open: number | null
-          status: Database["public"]["Enums"]["order_status_enum"]
+          status: string
         }
         Insert: {
           bot_id: number
@@ -163,12 +163,12 @@ export type Database = {
           is_buy: boolean
           last_updated_at?: string
           order_id?: number
-          order_type: Database["public"]["Enums"]["order_type_enum"]
+          order_type: string
           price_in_cents: number
           quantity: number
           quantity_filled?: number
           quantity_open?: number | null
-          status?: Database["public"]["Enums"]["order_status_enum"]
+          status?: string
         }
         Update: {
           bot_id?: number
@@ -178,12 +178,12 @@ export type Database = {
           is_buy?: boolean
           last_updated_at?: string
           order_id?: number
-          order_type?: Database["public"]["Enums"]["order_type_enum"]
+          order_type?: string
           price_in_cents?: number
           quantity?: number
           quantity_filled?: number
           quantity_open?: number | null
-          status?: Database["public"]["Enums"]["order_status_enum"]
+          status?: string
         }
         Relationships: [
           {
@@ -214,7 +214,45 @@ export type Database = {
             referencedRelation: "order_book"
             referencedColumns: ["company_id"]
           },
+          {
+            foreignKeyName: "order_order_type_fkey"
+            columns: ["order_type"]
+            isOneToOne: false
+            referencedRelation: "order_type"
+            referencedColumns: ["order_type"]
+          },
+          {
+            foreignKeyName: "order_status_fkey"
+            columns: ["status"]
+            isOneToOne: false
+            referencedRelation: "order_status"
+            referencedColumns: ["order_status"]
+          },
         ]
+      }
+      order_status: {
+        Row: {
+          order_status: string
+        }
+        Insert: {
+          order_status: string
+        }
+        Update: {
+          order_status?: string
+        }
+        Relationships: []
+      }
+      order_type: {
+        Row: {
+          order_type: string
+        }
+        Insert: {
+          order_type: string
+        }
+        Update: {
+          order_type?: string
+        }
+        Relationships: []
       }
       price_history: {
         Row: {
@@ -496,14 +534,7 @@ export type Database = {
       }
     }
     Enums: {
-      order_status_enum:
-        | "pending"
-        | "active"
-        | "filled"
-        | "partially_filled"
-        | "cancelled"
-        | "expired"
-      order_type_enum: "market" | "limit" | "stop"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -621,17 +652,7 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {
-      order_status_enum: [
-        "pending",
-        "active",
-        "filled",
-        "partially_filled",
-        "cancelled",
-        "expired",
-      ],
-      order_type_enum: ["market", "limit", "stop"],
-    },
+    Enums: {},
   },
 } as const
 

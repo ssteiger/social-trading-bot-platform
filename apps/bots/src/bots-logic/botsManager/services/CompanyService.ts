@@ -24,7 +24,7 @@ export class CompanyService {
 
 		// Get current prices for all companies
 		const { data: priceData } = await this.supabase
-			.from("current_market_prices")
+			.from("current_market_price")
 			.select("*");
 
 		const priceMap = new Map();

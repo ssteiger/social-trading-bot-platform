@@ -48,24 +48,43 @@ CREATE TABLE shareholding (
     UNIQUE(bot_id, company_id)
 );
 
--- Create enum for order types instead of a table
-CREATE TYPE order_type_enum AS ENUM ('market', 'limit', 'stop');
+-- Create table for order types instead of enum
+CREATE TABLE public.order_type (
+    order_type text NOT NULL PRIMARY KEY
+);
 
--- Create enum for order statuses instead of a table
-CREATE TYPE order_status_enum AS ENUM ('pending', 'active', 'filled', 'partially_filled', 'cancelled', 'expired');
+-- Insert order type values
+INSERT INTO public.order_type (order_type) VALUES 
+    ('market'),
+    ('limit'),
+    ('stop');
 
--- Update the order table to use the new enums
+-- Create table for order statuses instead of enum
+CREATE TABLE public.order_status (
+    order_status text NOT NULL PRIMARY KEY
+);
+
+-- Insert order status values
+INSERT INTO public.order_status (order_status) VALUES 
+    ('pending'),
+    ('active'),
+    ('filled'),
+    ('partially_filled'),
+    ('cancelled'),
+    ('expired');
+
+-- Update the order table to use the new tables instead of enums
 CREATE TABLE "order" (
     order_id SERIAL PRIMARY KEY,
     bot_id INTEGER NOT NULL REFERENCES bot(bot_id),
     company_id INTEGER NOT NULL REFERENCES company(company_id),
-    order_type order_type_enum NOT NULL,
+    order_type text NOT NULL REFERENCES public.order_type(order_type),
     is_buy BOOLEAN NOT NULL,
     price_in_cents BIGINT NOT NULL,
     quantity BIGINT NOT NULL,
     quantity_filled BIGINT NOT NULL DEFAULT 0,
     quantity_open BIGINT GENERATED ALWAYS AS (quantity - quantity_filled) STORED,
-    status order_status_enum NOT NULL DEFAULT 'pending',
+    status text NOT NULL DEFAULT 'pending' REFERENCES public.order_status(order_status),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMP,
     last_updated_at TIMESTAMP NOT NULL DEFAULT NOW()

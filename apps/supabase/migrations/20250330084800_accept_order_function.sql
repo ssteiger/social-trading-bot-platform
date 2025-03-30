@@ -12,8 +12,8 @@ DECLARE
   v_is_buy BOOLEAN;
   v_price_in_cents BIGINT;
   v_creator_bot_id INTEGER;
-  v_completed_status order_status_enum;
-  v_partial_status order_status_enum;
+  v_completed_status TEXT;
+  v_partial_status TEXT;
   v_trade_id INTEGER;
 BEGIN
   -- Get the order details
@@ -31,7 +31,6 @@ BEGIN
   v_price_in_cents := v_order.price_in_cents;
   v_creator_bot_id := v_order.bot_id;
   
-  -- Get status values using the new enum type
   v_completed_status := 'filled';
   v_partial_status := 'partially_filled';
   
@@ -154,13 +153,19 @@ BEGIN
   VALUES (
     v_company_id,
     v_exchange_id,
-    NOW(),
+    date_trunc('minute', NOW()),
     v_price_in_cents,
     v_price_in_cents,
     v_price_in_cents,
     v_price_in_cents,
     p_quantity,
     '1min'
-  );
+  )
+  ON CONFLICT (company_id, timestamp, period_length) 
+  DO UPDATE SET
+    close_price_in_cents = v_price_in_cents,
+    high_price_in_cents = GREATEST(price_history.high_price_in_cents, v_price_in_cents),
+    low_price_in_cents = LEAST(price_history.low_price_in_cents, v_price_in_cents),
+    volume = price_history.volume + p_quantity;
 END;
 $$ LANGUAGE plpgsql;
