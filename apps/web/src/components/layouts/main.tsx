@@ -14,6 +14,7 @@ import {
 	navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "./theme-toggle";
 
 interface MainLayoutProps {
 	children: React.ReactNode;
@@ -69,7 +70,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
 				<div className="container flex h-16 items-center justify-between mx-auto max-w-6xl">
 					<div className="flex items-center gap-6 md:gap-10">
 						<Link href="/" className="font-bold text-xl flex items-center">
-							{/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 24 24"
@@ -79,8 +79,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
 								strokeLinecap="round"
 								strokeLinejoin="round"
 								className="w-6 h-6 mr-2"
-								title="Social Trading Bots Logo"
 							>
+								<title>Social Trading Bots Logo</title>
 								<path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
 							</svg>
 							Social Trading Bots
@@ -98,8 +98,61 @@ export default function MainLayout({ children }: MainLayoutProps) {
 								</NavigationMenuItem>
 							</NavigationMenuList>
 						</NavigationMenu>
+						<NavigationMenu>
+							<NavigationMenuList>
+								<NavigationMenuItem>
+									<Link href="/exchanges" legacyBehavior passHref>
+										<NavigationMenuLink
+											className={navigationMenuTriggerStyle()}
+										>
+											Exchanges
+										</NavigationMenuLink>
+									</Link>
+								</NavigationMenuItem>
+							</NavigationMenuList>
+						</NavigationMenu>
+						<NavigationMenu>
+							<NavigationMenuList>
+								<NavigationMenuItem>
+									<Link href="/companies" legacyBehavior passHref>
+										<NavigationMenuLink
+											className={navigationMenuTriggerStyle()}
+										>
+											Companies
+										</NavigationMenuLink>
+									</Link>
+								</NavigationMenuItem>
+							</NavigationMenuList>
+						</NavigationMenu>
+						<NavigationMenu>
+							<NavigationMenuList>
+								<NavigationMenuItem>
+									<Link href="/traders" legacyBehavior passHref>
+										<NavigationMenuLink
+											className={navigationMenuTriggerStyle()}
+										>
+											Traders
+										</NavigationMenuLink>
+									</Link>
+								</NavigationMenuItem>
+							</NavigationMenuList>
+						</NavigationMenu>
+						<NavigationMenu>
+							<NavigationMenuList>
+								<NavigationMenuItem>
+									<Link href="/order-book" legacyBehavior passHref>
+										<NavigationMenuLink
+											className={navigationMenuTriggerStyle()}
+										>
+											Order Book
+										</NavigationMenuLink>
+									</Link>
+								</NavigationMenuItem>
+							</NavigationMenuList>
+						</NavigationMenu>
 					</div>
 					<div className="flex items-center gap-4">
+						<ThemeToggle />
 						{isLoggedIn ? (
 							<Button variant="ghost" onClick={handleLogout}>
 								Logout
@@ -132,112 +185,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
 							<p className="mt-2 text-sm text-muted-foreground">
 								A trading bot platform.
 							</p>
-						</div>
-						<div>
-							<h3 className="text-lg font-semibold">Links</h3>
-							<ul className="mt-2 space-y-2 text-sm">
-								<li>
-									<Link
-										href="/link-1"
-										className="text-muted-foreground hover:text-foreground"
-									>
-										Link 1
-									</Link>
-								</li>
-								<li>
-									<Link
-										href="/link-2"
-										className="text-muted-foreground hover:text-foreground"
-									>
-										Link 2
-									</Link>
-								</li>
-								<li>
-									<Link
-										href="/link-3"
-										className="text-muted-foreground hover:text-foreground"
-									>
-										Link 3
-									</Link>
-								</li>
-							</ul>
-						</div>
-						<div>
-							<h3 className="text-lg font-semibold">Company</h3>
-							<ul className="mt-2 space-y-2 text-sm">
-								<li>
-									<Link
-										href="/about"
-										className="text-muted-foreground hover:text-foreground"
-									>
-										About Us
-									</Link>
-								</li>
-								<li>
-									<Link
-										href="/careers"
-										className="text-muted-foreground hover:text-foreground"
-									>
-										Careers
-									</Link>
-								</li>
-								<li>
-									<Link
-										href="/contact"
-										className="text-muted-foreground hover:text-foreground"
-									>
-										Contact Us
-									</Link>
-								</li>
-							</ul>
-						</div>
-						<div>
-							<h3 className="text-lg font-semibold">Legal</h3>
-							<ul className="mt-2 space-y-2 text-sm">
-								<li>
-									<Link
-										href="/privacy"
-										className="text-muted-foreground hover:text-foreground"
-									>
-										Privacy Policy
-									</Link>
-								</li>
-								<li>
-									<Link
-										href="/terms"
-										className="text-muted-foreground hover:text-foreground"
-									>
-										Terms of Service
-									</Link>
-								</li>
-							</ul>
-						</div>
-					</div>
-					<Separator className="my-6" />
-					<div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-						<p className="text-sm text-muted-foreground">
-							&copy; {new Date().getFullYear()} Social Trading Bot Platform. All
-							rights reserved.
-						</p>
-						<div className="flex items-center gap-4">
-							<Link
-								href="https://twitter.com"
-								className="text-muted-foreground hover:text-foreground"
-							>
-								Twitter
-							</Link>
-							<Link
-								href="https://instagram.com"
-								className="text-muted-foreground hover:text-foreground"
-							>
-								Instagram
-							</Link>
-							<Link
-								href="https://facebook.com"
-								className="text-muted-foreground hover:text-foreground"
-							>
-								Facebook
-							</Link>
 						</div>
 					</div>
 				</div>

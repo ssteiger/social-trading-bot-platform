@@ -9,47 +9,36 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/utils/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import {
-	ArrowDownRight,
-	ArrowUpRight,
-	BarChartHorizontal,
-	DollarSign,
-} from "lucide-react";
-import { MarketOverview } from "./components/market-overview";
 import { PriceChart } from "./components/price-chart";
-import { RecentTrades } from "./components/recent-trades";
+
+/*
+CREATE TABLE IF NOT EXISTS "price_history" (
+	"history_id" serial PRIMARY KEY NOT NULL,
+	"company_id" varchar(10) NOT NULL,
+	"exchange_id" varchar(10) NOT NULL,
+	"open_price_in_cents" bigint NOT NULL,
+	"close_price_in_cents" bigint NOT NULL,
+	"high_price_in_cents" bigint NOT NULL,
+	"low_price_in_cents" bigint NOT NULL,
+	"volume" bigint NOT NULL,
+	"timestamp" timestamp NOT NULL,
+	"period_length" varchar(20) NOT NULL,
+	CONSTRAINT "price_history_company_id_timestamp_period_length_key" UNIQUE("company_id","timestamp","period_length")
+);
+*/
 
 export default function DashboardPage() {
-	const { data: marketData, isLoading: isLoadingMarket } = useQuery({
-		queryKey: ["market-overview"],
+	const {
+		data: companyData,
+		isLoading,
+		refetch,
+	} = useQuery({
+		queryKey: ["dashboard", "company"],
 		queryFn: async () => {
 			const supabase = createClient();
-			const { data, error } = await supabase
-				.from("current_market_prices")
-				.select("*")
-				.limit(10);
-
-			if (error) throw error;
-			return data;
-		},
-	});
-
-	const { data: recentTrades, isLoading: isLoadingTrades } = useQuery({
-		queryKey: ["recent-trades"],
-		queryFn: async () => {
-			const supabase = createClient();
-			const { data, error } = await supabase
-				.from("trades")
-				.select(`
-          *,
-          companies:company_id(company_name, ticker_symbol),
-          exchanges:exchange_id(exchange_name, exchange_code)
-        `)
-				.order("executed_at", { ascending: false })
-				.limit(10);
+			const { data, error } = await supabase.from("company").select("*");
 
 			if (error) throw error;
 			return data;
@@ -59,134 +48,48 @@ export default function DashboardPage() {
 	return (
 		<div className="flex-1 space-y-4 p-8 pt-6">
 			<div className="flex items-center justify-between space-y-2">
-				<h2 className="text-3xl font-bold tracking-tight">Trading Dashboard</h2>
+				<h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
 				<div className="flex items-center space-x-2">
-					<Button>Refresh Data</Button>
+					<Button onClick={() => refetch()}>Refresh Data</Button>
 				</div>
 			</div>
 
-			<Tabs defaultValue="overview" className="space-y-4">
-				<TabsList>
-					<TabsTrigger value="overview">Overview</TabsTrigger>
-					<TabsTrigger value="analytics">Analytics</TabsTrigger>
-					<TabsTrigger value="reports">Reports</TabsTrigger>
-				</TabsList>
-
-				<TabsContent value="overview" className="space-y-4">
-					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className="text-sm font-medium">
-									Total Market Volume
-								</CardTitle>
-								<DollarSign className="h-4 w-4 text-muted-foreground" />
-							</CardHeader>
-							<CardContent>
-								<div className="text-2xl font-bold">
-									{isLoadingMarket ? (
-										<Skeleton className="h-8 w-28" />
-									) : (
-										"$12,534,000"
-									)}
-								</div>
-								<p className="text-xs text-muted-foreground">
-									+20.1% from last week
-								</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className="text-sm font-medium">
-									Active Companies
-								</CardTitle>
-								<BarChartHorizontal className="h-4 w-4 text-muted-foreground" />
-							</CardHeader>
-							<CardContent>
-								<div className="text-2xl font-bold">
-									{isLoadingMarket ? <Skeleton className="h-8 w-20" /> : "573"}
-								</div>
-								<p className="text-xs text-muted-foreground">+18 new today</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className="text-sm font-medium">
-									Index Performance
-								</CardTitle>
-								<ArrowUpRight className="h-4 w-4 text-green-500" />
-							</CardHeader>
-							<CardContent>
-								<div className="text-2xl font-bold">
-									{isLoadingMarket ? (
-										<Skeleton className="h-8 w-24" />
-									) : (
-										"+2.5%"
-									)}
-								</div>
-								<p className="text-xs text-muted-foreground">
-									Across all exchanges
-								</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className="text-sm font-medium">
-									Active Bots
-								</CardTitle>
-								<ArrowUpRight className="h-4 w-4 text-green-500" />
-							</CardHeader>
-							<CardContent>
-								<div className="text-2xl font-bold">
-									{isLoadingMarket ? <Skeleton className="h-8 w-20" /> : "321"}
-								</div>
-								<p className="text-xs text-muted-foreground">
-									+24 in the last hour
-								</p>
-							</CardContent>
-						</Card>
-					</div>
-
-					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-						<Card className="col-span-4">
+			{isLoading ? (
+				<div className="grid grid-cols-1 gap-4">
+					{[...Array(4)].map((_, i) => (
+						<Card key={i}>
 							<CardHeader>
-								<CardTitle>Market Overview</CardTitle>
-							</CardHeader>
-							<CardContent className="pl-2">
-								{isLoadingMarket ? (
-									<Skeleton className="h-[300px] w-full" />
-								) : (
-									<PriceChart />
-								)}
-							</CardContent>
-						</Card>
-
-						<Card className="col-span-3">
-							<CardHeader>
-								<CardTitle>Recent Trades</CardTitle>
-								<CardDescription>
-									The latest transactions across all exchanges
-								</CardDescription>
+								<Skeleton className="h-6 w-1/3" />
 							</CardHeader>
 							<CardContent>
-								{isLoadingTrades ? (
-									<div className="space-y-2">
-										{Array(5)
-											.fill(0)
-											.map((_, i) => (
-												<Skeleton key={i} className="h-14 w-full" />
-											))}
-									</div>
-								) : (
-									<RecentTrades trades={recentTrades || []} />
-								)}
+								<Skeleton className="h-[200px] w-full" />
 							</CardContent>
 						</Card>
-					</div>
-				</TabsContent>
-			</Tabs>
+					))}
+				</div>
+			) : (
+				<div className="grid grid-cols-1 gap-4">
+					{companyData && companyData.length > 0 ? (
+						companyData.map((company) => (
+							<Card key={company.company_id}>
+								<CardHeader>
+									<CardTitle>{company.company_name}</CardTitle>
+									<CardDescription>
+										Symbol: {company.company_id}
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<PriceChart companyId={company.company_id} />
+								</CardContent>
+							</Card>
+						))
+					) : (
+						<div className="col-span-full text-center py-8">
+							<p className="text-muted-foreground">No company data available</p>
+						</div>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }

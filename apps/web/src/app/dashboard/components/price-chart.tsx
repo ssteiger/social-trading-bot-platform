@@ -1,117 +1,271 @@
 "use client";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/client";
+import { ArrowDownIcon, ArrowUpIcon } from "@radix-ui/react-icons";
+import type { PriceHistory } from "@social-trading-bot-platform/db-drizzle";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
 	Area,
 	AreaChart,
+	Bar,
 	CartesianGrid,
+	ComposedChart,
+	Legend,
 	ResponsiveContainer,
 	Tooltip,
 	XAxis,
 	YAxis,
 } from "recharts";
 
-export function PriceChart() {
+/*
+CREATE TABLE IF NOT EXISTS "price_history" (
+	"history_id" serial PRIMARY KEY NOT NULL,
+	"company_id" varchar(10) NOT NULL,
+	"exchange_id" varchar(10) NOT NULL,
+	"open_price_in_cents" bigint NOT NULL,
+	"close_price_in_cents" bigint NOT NULL,
+	"high_price_in_cents" bigint NOT NULL,
+	"low_price_in_cents" bigint NOT NULL,
+	"volume" bigint NOT NULL,
+	"timestamp" timestamp NOT NULL,
+	"period_length" varchar(20) NOT NULL,
+	CONSTRAINT "price_history_company_id_timestamp_period_length_key" UNIQUE("company_id","timestamp","period_length")
+);
+*/
+
+export function PriceChart({ companyId }: { companyId: string }) {
 	const { data, isLoading } = useQuery({
-		queryKey: ["price-history"],
+		queryKey: ["price-history", companyId],
 		queryFn: async () => {
 			const supabase = createClient();
 			const { data, error } = await supabase
 				.from("price_history")
 				.select("*")
+				.eq("company_id", companyId)
 				.order("timestamp", { ascending: true })
 				.limit(100);
 
 			if (error) throw error;
 
-			// Format the data for the chart
-			return data.map((item) => ({
-				time: format(new Date(item.timestamp), "HH:mm"),
-				price: item.close_price,
-				volume: item.volume,
-			}));
+			return data;
 		},
 	});
 
-	// Sample data for initial development
-	const sampleData = Array(24)
-		.fill(0)
-		.map((_, i) => {
-			const hour = i.toString().padStart(2, "0");
-			const basePrice = 100 + Math.sin(i / 3) * 20;
-			return {
-				time: `${hour}:00`,
-				price: basePrice + Math.random() * 5,
-				volume: Math.floor(500 + Math.random() * 1000),
-			};
-		});
+	const generateChartData = (data: PriceHistory[]) => {
+		if (!data || data.length === 0) return [];
 
-	const chartData = data || sampleData;
+		return data.map((item) => ({
+			time: format(new Date(item.timestamp), "MMM dd HH:mm"),
+			price: item.close_price_in_cents / 100, // Convert cents to dollars/main currency unit
+			open: item.open_price_in_cents / 100,
+			high: item.high_price_in_cents / 100,
+			low: item.low_price_in_cents / 100,
+			volume: item.volume,
+		}));
+	};
+
+	const chartData = data ? generateChartData(data) : [];
+
+	// Calculate price change and percentage
+	const calculatePriceChange = () => {
+		if (!chartData || chartData.length < 2) return { change: 0, percentage: 0 };
+
+		const firstPrice = chartData[0].price;
+		const lastPrice = chartData[chartData.length - 1].price;
+		const change = lastPrice - firstPrice;
+		const percentage = (change / firstPrice) * 100;
+
+		return { change, percentage };
+	};
+
+	const { change, percentage } = calculatePriceChange();
+	const isPositive = change >= 0;
+
+	if (isLoading) {
+		return (
+			<div className="w-full">
+				<div className="pb-2">
+					<div className="text-lg font-medium">Price Chart</div>
+					<Skeleton className="h-4 w-[250px]" />
+				</div>
+				<div>
+					<Skeleton className="h-[300px] w-full" />
+				</div>
+			</div>
+		);
+	}
 
 	return (
-		<ResponsiveContainer width="100%" height={300}>
-			<AreaChart
-				data={chartData}
-				margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-			>
-				<defs>
-					<linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-						<stop
-							offset="5%"
-							stopColor="var(--color-primary)"
-							stopOpacity={0.8}
+		<div className="w-full">
+			<div className="pb-2">
+				<div className="flex justify-between items-center">
+					<div className="text-lg font-medium">Price Chart</div>
+					<div className="flex items-center gap-2">
+						<span className="text-2xl font-bold">
+							$
+							{chartData.length
+								? chartData[chartData.length - 1].price.toFixed(2)
+								: "0.00"}
+						</span>
+						<div
+							className={`flex items-center ${isPositive ? "text-green-500" : "text-red-500"}`}
+						>
+							{isPositive ? (
+								<ArrowUpIcon className="mr-1" />
+							) : (
+								<ArrowDownIcon className="mr-1" />
+							)}
+							<span className="font-medium">
+								{change.toFixed(2)} ({percentage.toFixed(2)}%)
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div>
+				<ResponsiveContainer width="100%" height={400}>
+					<ComposedChart
+						data={chartData}
+						margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+					>
+						<defs>
+							<linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+								<stop
+									offset="5%"
+									stopColor={
+										isPositive
+											? "rgba(16, 185, 129, 0.8)"
+											: "rgba(239, 68, 68, 0.8)"
+									}
+									stopOpacity={0.8}
+								/>
+								<stop
+									offset="95%"
+									stopColor={
+										isPositive
+											? "rgba(16, 185, 129, 0.1)"
+											: "rgba(239, 68, 68, 0.1)"
+									}
+									stopOpacity={0}
+								/>
+							</linearGradient>
+							<linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
+								<stop
+									offset="5%"
+									stopColor="rgba(99, 102, 241, 0.8)"
+									stopOpacity={0.8}
+								/>
+								<stop
+									offset="95%"
+									stopColor="rgba(99, 102, 241, 0.1)"
+									stopOpacity={0}
+								/>
+							</linearGradient>
+						</defs>
+						<XAxis
+							dataKey="time"
+							tickLine={false}
+							axisLine={false}
+							tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
 						/>
-						<stop
-							offset="95%"
-							stopColor="var(--color-primary)"
-							stopOpacity={0}
+						<YAxis
+							yAxisId="left"
+							tickLine={false}
+							axisLine={false}
+							tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
+							domain={["auto", "auto"]}
+							tickFormatter={(value) => `$${value}`}
 						/>
-					</linearGradient>
-				</defs>
-				<XAxis
-					dataKey="time"
-					tickLine={false}
-					axisLine={false}
-					tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
-				/>
-				<YAxis
-					tickLine={false}
-					axisLine={false}
-					tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
-					domain={["auto", "auto"]}
-				/>
-				<CartesianGrid
-					strokeDasharray="3 3"
-					vertical={false}
-					stroke="var(--color-border)"
-				/>
-				<Tooltip
-					contentStyle={{
-						backgroundColor: "var(--color-card)",
-						borderColor: "var(--color-border)",
-						color: "var(--color-foreground)",
-						borderRadius: "var(--radius-md)",
-						boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-					}}
-					itemStyle={{
-						color: "var(--color-foreground)",
-					}}
-					labelStyle={{
-						color: "var(--color-muted-foreground)",
-						fontWeight: "bold",
-						marginBottom: "5px",
-					}}
-				/>
-				<Area
-					type="monotone"
-					dataKey="price"
-					stroke="var(--color-primary)"
-					fillOpacity={1}
-					fill="url(#colorPrice)"
-				/>
-			</AreaChart>
-		</ResponsiveContainer>
+						<YAxis
+							yAxisId="right"
+							orientation="right"
+							tickLine={false}
+							axisLine={false}
+							tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
+							domain={["auto", "auto"]}
+							tickFormatter={(value) => `${value}`}
+						/>
+						<CartesianGrid
+							strokeDasharray="3 3"
+							vertical={false}
+							stroke="var(--color-border)"
+							opacity={0.4}
+						/>
+						<Tooltip
+							contentStyle={{
+								backgroundColor: "var(--color-card)",
+								borderColor: "var(--color-border)",
+								color: "var(--color-foreground)",
+								borderRadius: "var(--radius-md)",
+								boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+								padding: "10px",
+							}}
+							itemStyle={{
+								color: "var(--color-foreground)",
+								padding: "4px 0",
+							}}
+							labelStyle={{
+								color: "var(--color-muted-foreground)",
+								fontWeight: "bold",
+								marginBottom: "8px",
+								borderBottom: "1px solid var(--color-border)",
+								paddingBottom: "5px",
+							}}
+							formatter={(value: any, name: any) => {
+								if (
+									name === "price" ||
+									name === "open" ||
+									name === "high" ||
+									name === "low"
+								) {
+									return [
+										`$${typeof value === "number" ? value.toFixed(2) : value}`,
+										typeof name === "string"
+											? name.charAt(0).toUpperCase() + name.slice(1)
+											: name,
+									];
+								}
+								return [
+									value,
+									typeof name === "string"
+										? name.charAt(0).toUpperCase() + name.slice(1)
+										: name,
+								];
+							}}
+						/>
+						<Legend
+							verticalAlign="top"
+							height={36}
+							formatter={(value: any) =>
+								typeof value === "string"
+									? value.charAt(0).toUpperCase() + value.slice(1)
+									: value
+							}
+						/>
+						<Area
+							yAxisId="left"
+							type="monotone"
+							dataKey="price"
+							stroke={isPositive ? "rgb(16, 185, 129)" : "rgb(239, 68, 68)"}
+							strokeWidth={2}
+							fillOpacity={1}
+							fill="url(#colorPrice)"
+							name="Price"
+						/>
+						<Bar
+							yAxisId="right"
+							dataKey="volume"
+							fill="url(#colorVolume)"
+							name="Volume"
+							barSize={20}
+							opacity={0.8}
+						/>
+					</ComposedChart>
+				</ResponsiveContainer>
+			</div>
+		</div>
 	);
 }

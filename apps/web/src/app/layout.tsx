@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import MainLayout from "@/components/layouts/main";
 import QueryClientProvider from "@/components/providers/query-client-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Toaster } from "sonner";
@@ -28,31 +29,39 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
+			<head />
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
 				<Toaster position="top-right" />
-				<QueryClientProvider>
-					<MainLayout>
-						{/* Local DB Button */}
-						<Button
-							asChild
-							variant="outline"
-							size="sm"
-							className="fixed top-2 left-2 z-50"
-						>
-							<Link
-								href="http://127.0.0.1:54323/project/default"
-								target="_blank"
-								rel="noopener noreferrer"
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					enableSystem
+					disableTransitionOnChange
+				>
+					<QueryClientProvider>
+						<MainLayout>
+							{/* Local DB Button */}
+							<Button
+								asChild
+								variant="outline"
+								size="sm"
+								className="fixed top-2 left-2 z-50"
 							>
-								local db
-							</Link>
-						</Button>
-						{children}
-					</MainLayout>
-				</QueryClientProvider>
+								<Link
+									href="http://127.0.0.1:54323/project/default"
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									local db
+								</Link>
+							</Button>
+							{children}
+						</MainLayout>
+					</QueryClientProvider>
+				</ThemeProvider>
 			</body>
 		</html>
 	);
