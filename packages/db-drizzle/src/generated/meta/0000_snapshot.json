@@ -68,7 +68,7 @@
       "columns": {
         "company_id": {
           "name": "company_id",
-          "type": "serial",
+          "type": "varchar(10)",
           "primaryKey": true,
           "notNull": true
         },
@@ -80,7 +80,7 @@
         },
         "exchange_id": {
           "name": "exchange_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": true
         },
@@ -158,7 +158,12 @@
           "name": "company_exchange_id_ticker_symbol_key"
         }
       },
-      "checkConstraints": {},
+      "checkConstraints": {
+        "company_id_equals_ticker": {
+          "name": "company_id_equals_ticker",
+          "value": "(company_id)::text = (ticker_symbol)::text"
+        }
+      },
       "policies": {},
       "isRLSEnabled": false
     },
@@ -168,7 +173,7 @@
       "columns": {
         "exchange_id": {
           "name": "exchange_id",
-          "type": "serial",
+          "type": "varchar(10)",
           "primaryKey": true,
           "notNull": true
         },
@@ -218,7 +223,12 @@
           "name": "exchange_exchange_code_key"
         }
       },
-      "checkConstraints": {},
+      "checkConstraints": {
+        "exchange_id_equals_code": {
+          "name": "exchange_id_equals_code",
+          "value": "(exchange_id)::text = (exchange_code)::text"
+        }
+      },
       "policies": {},
       "isRLSEnabled": false
     },
@@ -240,7 +250,7 @@
         },
         "company_id": {
           "name": "company_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": true
         },
@@ -346,7 +356,7 @@
         },
         "company_id": {
           "name": "company_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": true
         },
@@ -443,7 +453,7 @@
               "expression": "company_id",
               "asc": true,
               "nulls": "last",
-              "opclass": "int4_ops",
+              "opclass": "text_ops",
               "isExpression": false
             }
           ],
@@ -583,13 +593,13 @@
         },
         "exchange_id": {
           "name": "exchange_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": true
         },
         "company_id": {
           "name": "company_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": true
         },
@@ -651,7 +661,7 @@
               "expression": "company_id",
               "asc": true,
               "nulls": "last",
-              "opclass": "int4_ops",
+              "opclass": "text_ops",
               "isExpression": false
             }
           ],
@@ -781,13 +791,13 @@
         },
         "company_id": {
           "name": "company_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": true
         },
         "exchange_id": {
           "name": "exchange_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": true
         },
@@ -842,7 +852,7 @@
               "expression": "company_id",
               "asc": true,
               "nulls": "last",
-              "opclass": "int4_ops",
+              "opclass": "timestamp_ops",
               "isExpression": false
             },
             {
@@ -918,7 +928,7 @@
       "columns": {
         "company_id": {
           "name": "company_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
         },
@@ -930,7 +940,7 @@
         },
         "exchange_id": {
           "name": "exchange_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
         },
@@ -966,7 +976,7 @@
         }
       },
       "isExisting": false,
-      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM \"order\" o JOIN company c ON o.company_id = c.company_id JOIN exchange e ON c.exchange_id = e.exchange_id WHERE o.status = 'active'::text GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC",
+      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_id AS exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM \"order\" o JOIN company c ON o.company_id::text = c.company_id::text JOIN exchange e ON c.exchange_id::text = e.exchange_id::text WHERE o.status = 'active'::text GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_id, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC",
       "materialized": false
     },
     "public.current_market_price": {
@@ -975,7 +985,7 @@
       "columns": {
         "company_id": {
           "name": "company_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
         },
@@ -987,7 +997,7 @@
         },
         "exchange_id": {
           "name": "exchange_id",
-          "type": "integer",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
         },
@@ -1023,7 +1033,7 @@
         }
       },
       "isExisting": false,
-      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, ( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = true AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0) AS bid_price, ( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = false AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0) AS ask_price, (( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = false AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0)) - (( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = true AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id = c.company_id ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id = e.exchange_id",
+      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_id AS exchange_code, ( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id::text = c.company_id::text AND \"order\".is_buy = true AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0) AS bid_price, ( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id::text = c.company_id::text AND \"order\".is_buy = false AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0) AS ask_price, (( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id::text = c.company_id::text AND \"order\".is_buy = false AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0)) - (( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id::text = c.company_id::text AND \"order\".is_buy = true AND \"order\".status = 'active'::text AND \"order\".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id::text = c.company_id::text ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id::text = e.exchange_id::text",
       "materialized": false
     }
   },

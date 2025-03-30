@@ -36,6 +36,7 @@ async function createCompanies(supabase: SupabaseClient) {
 		const { data: companyData, error: companyError } = await supabase
 			.from("company")
 			.insert({
+				company_id: bot.company.company_id,
 				creator_bot_id: botData.bot_id,
 				exchange_id: bot.company.exchange_id,
 				company_name: bot.company.name,

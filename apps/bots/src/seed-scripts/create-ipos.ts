@@ -71,9 +71,8 @@ async function createIPOs(supabase: SupabaseClient) {
 		if (error) {
 			console.error("Error creating ipo order:", status);
 		} else {
-			console.log(`Created ipo order for ${bot_name} successfully.`);
+			console.log(`Creating ipo order for ${company_name}: success.`);
 		}
-		console.log("Created ipo orders successfully.", { data });
 		//return data;
 	}
 }

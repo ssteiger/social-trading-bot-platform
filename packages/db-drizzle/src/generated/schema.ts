@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, timestamp, text, bigint, foreignKey, unique, integer, numeric, boolean, index, pgView } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, timestamp, text, bigint, foreignKey, unique, check, integer, numeric, boolean, index, pgView } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -15,9 +15,9 @@ export const bot = pgTable("bot", {
 });
 
 export const company = pgTable("company", {
-	company_id: serial().primaryKey().notNull(),
+	company_id: varchar({ length: 10 }).primaryKey().notNull(),
 	creator_bot_id: integer().notNull(),
-	exchange_id: integer().notNull(),
+	exchange_id: varchar({ length: 10 }).notNull(),
 	company_name: varchar({ length: 100 }).notNull(),
 	ticker_symbol: varchar({ length: 10 }).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -37,11 +37,12 @@ export const company = pgTable("company", {
 			name: "company_exchange_id_fkey"
 		}),
 		company_exchange_id_ticker_symbol_key: unique("company_exchange_id_ticker_symbol_key").on(table.exchange_id, table.ticker_symbol),
+		company_id_equals_ticker: check("company_id_equals_ticker", sql`(company_id)::text = (ticker_symbol)::text`),
 	}
 });
 
 export const exchange = pgTable("exchange", {
-	exchange_id: serial().primaryKey().notNull(),
+	exchange_id: varchar({ length: 10 }).primaryKey().notNull(),
 	exchange_name: varchar({ length: 100 }).notNull(),
 	exchange_code: varchar({ length: 10 }).notNull(),
 	trading_fee_percent: numeric({ precision: 5, scale:  2 }).default('0.1').notNull(),
@@ -50,13 +51,14 @@ export const exchange = pgTable("exchange", {
 }, (table) => {
 	return {
 		exchange_exchange_code_key: unique("exchange_exchange_code_key").on(table.exchange_code),
+		exchange_id_equals_code: check("exchange_id_equals_code", sql`(exchange_id)::text = (exchange_code)::text`),
 	}
 });
 
 export const shareholding = pgTable("shareholding", {
 	shareholding_id: serial().primaryKey().notNull(),
 	bot_id: integer().notNull(),
-	company_id: integer().notNull(),
+	company_id: varchar({ length: 10 }).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	shares: bigint({ mode: "number" }).default(0).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -82,7 +84,7 @@ export const shareholding = pgTable("shareholding", {
 export const order = pgTable("order", {
 	order_id: serial().primaryKey().notNull(),
 	bot_id: integer().notNull(),
-	company_id: integer().notNull(),
+	company_id: varchar({ length: 10 }).notNull(),
 	order_type: text().notNull(),
 	is_buy: boolean().notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -100,7 +102,7 @@ export const order = pgTable("order", {
 }, (table) => {
 	return {
 		idx_order_bot_id: index("idx_order_bot_id").using("btree", table.bot_id.asc().nullsLast().op("int4_ops")),
-		idx_order_company_id: index("idx_order_company_id").using("btree", table.company_id.asc().nullsLast().op("int4_ops")),
+		idx_order_company_id: index("idx_order_company_id").using("btree", table.company_id.asc().nullsLast().op("text_ops")),
 		idx_order_status: index("idx_order_status").using("btree", table.status.asc().nullsLast().op("text_ops")),
 		order_bot_id_fkey: foreignKey({
 			columns: [table.bot_id],
@@ -135,8 +137,8 @@ export const order_status = pgTable("order_status", {
 
 export const trade = pgTable("trade", {
 	trade_id: serial().primaryKey().notNull(),
-	exchange_id: integer().notNull(),
-	company_id: integer().notNull(),
+	exchange_id: varchar({ length: 10 }).notNull(),
+	company_id: varchar({ length: 10 }).notNull(),
 	buy_order_id: integer().notNull(),
 	sell_order_id: integer().notNull(),
 	buyer_bot_id: integer().notNull(),
@@ -150,7 +152,7 @@ export const trade = pgTable("trade", {
 	executed_at: timestamp({ mode: 'string' }).defaultNow().notNull(),
 }, (table) => {
 	return {
-		idx_trade_company_id: index("idx_trade_company_id").using("btree", table.company_id.asc().nullsLast().op("int4_ops")),
+		idx_trade_company_id: index("idx_trade_company_id").using("btree", table.company_id.asc().nullsLast().op("text_ops")),
 		idx_trade_executed_at: index("idx_trade_executed_at").using("btree", table.executed_at.asc().nullsLast().op("timestamp_ops")),
 		trade_exchange_id_fkey: foreignKey({
 			columns: [table.exchange_id],
@@ -187,8 +189,8 @@ export const trade = pgTable("trade", {
 
 export const price_history = pgTable("price_history", {
 	history_id: serial().primaryKey().notNull(),
-	company_id: integer().notNull(),
-	exchange_id: integer().notNull(),
+	company_id: varchar({ length: 10 }).notNull(),
+	exchange_id: varchar({ length: 10 }).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	open_price_in_cents: bigint({ mode: "number" }).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -203,7 +205,7 @@ export const price_history = pgTable("price_history", {
 	period_length: varchar({ length: 20 }).notNull(),
 }, (table) => {
 	return {
-		idx_price_history_company_timestamp: index("idx_price_history_company_timestamp").using("btree", table.company_id.asc().nullsLast().op("int4_ops"), table.timestamp.asc().nullsLast().op("timestamp_ops")),
+		idx_price_history_company_timestamp: index("idx_price_history_company_timestamp").using("btree", table.company_id.asc().nullsLast().op("timestamp_ops"), table.timestamp.asc().nullsLast().op("timestamp_ops")),
 		price_history_company_id_fkey: foreignKey({
 			columns: [table.company_id],
 			foreignColumns: [company.company_id],
@@ -217,20 +219,20 @@ export const price_history = pgTable("price_history", {
 		price_history_company_id_timestamp_period_length_key: unique("price_history_company_id_timestamp_period_length_key").on(table.company_id, table.timestamp, table.period_length),
 	}
 });
-export const order_book = pgView("order_book", {	company_id: integer(),
+export const order_book = pgView("order_book", {	company_id: varchar({ length: 10 }),
 	ticker_symbol: varchar({ length: 10 }),
-	exchange_id: integer(),
+	exchange_id: varchar({ length: 10 }),
 	exchange_code: varchar({ length: 10 }),
 	is_buy: boolean(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	price_in_cents: bigint({ mode: "number" }),
 	total_quantity: numeric(),
 	oldest_order_time: timestamp({ mode: 'string' }),
-}).as(sql`SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM "order" o JOIN company c ON o.company_id = c.company_id JOIN exchange e ON c.exchange_id = e.exchange_id WHERE o.status = 'active'::text GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC`);
+}).as(sql`SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_id AS exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM "order" o JOIN company c ON o.company_id::text = c.company_id::text JOIN exchange e ON c.exchange_id::text = e.exchange_id::text WHERE o.status = 'active'::text GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_id, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC`);
 
-export const current_market_price = pgView("current_market_price", {	company_id: integer(),
+export const current_market_price = pgView("current_market_price", {	company_id: varchar({ length: 10 }),
 	ticker_symbol: varchar({ length: 10 }),
-	exchange_id: integer(),
+	exchange_id: varchar({ length: 10 }),
 	exchange_code: varchar({ length: 10 }),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	bid_price: bigint({ mode: "number" }),
@@ -239,4 +241,4 @@ export const current_market_price = pgView("current_market_price", {	company_id:
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	spread: bigint({ mode: "number" }),
 	last_trade_time: timestamp({ mode: 'string' }),
-}).as(sql`SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, ( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::text AND "order".quantity_open > 0) AS bid_price, ( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::text AND "order".quantity_open > 0) AS ask_price, (( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = false AND "order".status = 'active'::text AND "order".quantity_open > 0)) - (( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id = c.company_id AND "order".is_buy = true AND "order".status = 'active'::text AND "order".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id = c.company_id ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id = e.exchange_id`);
+}).as(sql`SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_id AS exchange_code, ( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id::text = c.company_id::text AND "order".is_buy = true AND "order".status = 'active'::text AND "order".quantity_open > 0) AS bid_price, ( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id::text = c.company_id::text AND "order".is_buy = false AND "order".status = 'active'::text AND "order".quantity_open > 0) AS ask_price, (( SELECT min("order".price_in_cents) AS min FROM "order" WHERE "order".company_id::text = c.company_id::text AND "order".is_buy = false AND "order".status = 'active'::text AND "order".quantity_open > 0)) - (( SELECT max("order".price_in_cents) AS max FROM "order" WHERE "order".company_id::text = c.company_id::text AND "order".is_buy = true AND "order".status = 'active'::text AND "order".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id::text = c.company_id::text ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id::text = e.exchange_id::text`);

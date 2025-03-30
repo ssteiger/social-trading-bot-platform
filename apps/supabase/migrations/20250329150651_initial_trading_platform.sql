@@ -16,32 +16,34 @@ COMMENT ON COLUMN bot.money_balance_in_cents IS 'The bot''s available cash balan
 
 -- Create table for stock exchanges
 CREATE TABLE exchange (
-    exchange_id SERIAL PRIMARY KEY,
+    exchange_id VARCHAR(10) PRIMARY KEY,
     exchange_name VARCHAR(100) NOT NULL,
     exchange_code VARCHAR(10) NOT NULL UNIQUE,
     trading_fee_percent DECIMAL(5, 2) NOT NULL DEFAULT 0.1,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT exchange_id_equals_code CHECK (exchange_id = exchange_code)
 );
 
 -- Create table for companies (stocks)
 CREATE TABLE company (
-    company_id SERIAL PRIMARY KEY,
+    company_id VARCHAR(10) PRIMARY KEY,
     creator_bot_id INTEGER NOT NULL REFERENCES bot(bot_id),
-    exchange_id INTEGER NOT NULL REFERENCES exchange(exchange_id),
+    exchange_id VARCHAR(10) NOT NULL REFERENCES exchange(exchange_id),
     company_name VARCHAR(100) NOT NULL,
     ticker_symbol VARCHAR(10) NOT NULL,
     total_shares BIGINT NOT NULL,
     description TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    UNIQUE(exchange_id, ticker_symbol)
+    UNIQUE(exchange_id, ticker_symbol),
+    CONSTRAINT company_id_equals_ticker CHECK (company_id = ticker_symbol)
 );
 
 -- Create table for bot shareholdings
 CREATE TABLE shareholding (
     shareholding_id SERIAL PRIMARY KEY,
     bot_id INTEGER NOT NULL REFERENCES bot(bot_id),
-    company_id INTEGER NOT NULL REFERENCES company(company_id),
+    company_id VARCHAR(10) NOT NULL REFERENCES company(company_id),
     shares BIGINT NOT NULL DEFAULT 0,
     average_purchase_price_in_cents BIGINT,
     last_updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -77,7 +79,7 @@ INSERT INTO public.order_status (order_status) VALUES
 CREATE TABLE "order" (
     order_id SERIAL PRIMARY KEY,
     bot_id INTEGER NOT NULL REFERENCES bot(bot_id),
-    company_id INTEGER NOT NULL REFERENCES company(company_id),
+    company_id VARCHAR(10) NOT NULL REFERENCES company(company_id),
     order_type text NOT NULL REFERENCES public.order_type(order_type),
     is_buy BOOLEAN NOT NULL,
     price_in_cents BIGINT NOT NULL,
@@ -93,8 +95,8 @@ CREATE TABLE "order" (
 -- Create table for trades (executed orders)
 CREATE TABLE trade (
     trade_id SERIAL PRIMARY KEY,
-    exchange_id INTEGER NOT NULL REFERENCES exchange(exchange_id),
-    company_id INTEGER NOT NULL REFERENCES company(company_id),
+    exchange_id VARCHAR(10) NOT NULL REFERENCES exchange(exchange_id),
+    company_id VARCHAR(10) NOT NULL REFERENCES company(company_id),
     buy_order_id INTEGER NOT NULL REFERENCES "order"(order_id),
     sell_order_id INTEGER NOT NULL REFERENCES "order"(order_id),
     buyer_bot_id INTEGER NOT NULL REFERENCES bot(bot_id),
@@ -108,8 +110,8 @@ CREATE TABLE trade (
 -- Create table for price history
 CREATE TABLE price_history (
     history_id SERIAL PRIMARY KEY,
-    company_id INTEGER NOT NULL REFERENCES company(company_id),
-    exchange_id INTEGER NOT NULL REFERENCES exchange(exchange_id),
+    company_id VARCHAR(10) NOT NULL REFERENCES company(company_id),
+    exchange_id VARCHAR(10) NOT NULL REFERENCES exchange(exchange_id),
     open_price_in_cents BIGINT NOT NULL,
     close_price_in_cents BIGINT NOT NULL,
     high_price_in_cents BIGINT NOT NULL,
@@ -129,13 +131,13 @@ CREATE INDEX idx_trade_executed_at ON trade(executed_at);
 CREATE INDEX idx_shareholding_bot_id ON shareholding(bot_id);
 CREATE INDEX idx_price_history_company_timestamp ON price_history(company_id, timestamp);
 
--- Update the order book view to use the new enums
+-- Update the order book view to use exchange_id instead of exchange_code
 CREATE VIEW order_book AS
 SELECT 
     c.company_id,
     c.ticker_symbol,
     c.exchange_id,
-    e.exchange_code,
+    e.exchange_id as exchange_code,
     o.is_buy,
     o.price_in_cents,
     SUM(o.quantity - o.quantity_filled) as total_quantity,
@@ -149,17 +151,17 @@ JOIN
 WHERE 
     o.status = 'active'
 GROUP BY 
-    c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents
+    c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_id, o.is_buy, o.price_in_cents
 ORDER BY 
     c.company_id, o.is_buy DESC, o.price_in_cents DESC;
 
--- Update the current_market_price view to use the new enums
+-- Update the current_market_price view to use exchange_id instead of exchange_code
 CREATE VIEW current_market_price AS
 SELECT 
     c.company_id,
     c.ticker_symbol,
     c.exchange_id,
-    e.exchange_code,
+    e.exchange_id as exchange_code,
     (
         SELECT MAX(price_in_cents)
         FROM "order"

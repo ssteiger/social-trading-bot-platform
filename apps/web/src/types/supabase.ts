@@ -66,32 +66,32 @@ export type Database = {
       }
       company: {
         Row: {
-          company_id: number
+          company_id: string
           company_name: string
           created_at: string
           creator_bot_id: number
           description: string | null
-          exchange_id: number
+          exchange_id: string
           ticker_symbol: string
           total_shares: number
         }
         Insert: {
-          company_id?: number
+          company_id: string
           company_name: string
           created_at?: string
           creator_bot_id: number
           description?: string | null
-          exchange_id: number
+          exchange_id: string
           ticker_symbol: string
           total_shares: number
         }
         Update: {
-          company_id?: number
+          company_id?: string
           company_name?: string
           created_at?: string
           creator_bot_id?: number
           description?: string | null
-          exchange_id?: number
+          exchange_id?: string
           ticker_symbol?: string
           total_shares?: number
         }
@@ -107,8 +107,22 @@ export type Database = {
             foreignKeyName: "company_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
+            referencedRelation: "current_market_price"
+            referencedColumns: ["exchange_code"]
+          },
+          {
+            foreignKeyName: "company_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
             referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
+          },
+          {
+            foreignKeyName: "company_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
+            referencedRelation: "order_book"
+            referencedColumns: ["exchange_code"]
           },
         ]
       }
@@ -116,7 +130,7 @@ export type Database = {
         Row: {
           created_at: string
           exchange_code: string
-          exchange_id: number
+          exchange_id: string
           exchange_name: string
           is_active: boolean
           trading_fee_percent: number
@@ -124,7 +138,7 @@ export type Database = {
         Insert: {
           created_at?: string
           exchange_code: string
-          exchange_id?: number
+          exchange_id: string
           exchange_name: string
           is_active?: boolean
           trading_fee_percent?: number
@@ -132,7 +146,7 @@ export type Database = {
         Update: {
           created_at?: string
           exchange_code?: string
-          exchange_id?: number
+          exchange_id?: string
           exchange_name?: string
           is_active?: boolean
           trading_fee_percent?: number
@@ -142,7 +156,7 @@ export type Database = {
       order: {
         Row: {
           bot_id: number
-          company_id: number
+          company_id: string
           created_at: string
           expires_at: string | null
           is_buy: boolean
@@ -157,7 +171,7 @@ export type Database = {
         }
         Insert: {
           bot_id: number
-          company_id: number
+          company_id: string
           created_at?: string
           expires_at?: string | null
           is_buy: boolean
@@ -172,7 +186,7 @@ export type Database = {
         }
         Update: {
           bot_id?: number
-          company_id?: number
+          company_id?: string
           created_at?: string
           expires_at?: string | null
           is_buy?: boolean
@@ -257,8 +271,8 @@ export type Database = {
       price_history: {
         Row: {
           close_price_in_cents: number
-          company_id: number
-          exchange_id: number
+          company_id: string
+          exchange_id: string
           high_price_in_cents: number
           history_id: number
           low_price_in_cents: number
@@ -269,8 +283,8 @@ export type Database = {
         }
         Insert: {
           close_price_in_cents: number
-          company_id: number
-          exchange_id: number
+          company_id: string
+          exchange_id: string
           high_price_in_cents: number
           history_id?: number
           low_price_in_cents: number
@@ -281,8 +295,8 @@ export type Database = {
         }
         Update: {
           close_price_in_cents?: number
-          company_id?: number
-          exchange_id?: number
+          company_id?: string
+          exchange_id?: string
           high_price_in_cents?: number
           history_id?: number
           low_price_in_cents?: number
@@ -317,8 +331,22 @@ export type Database = {
             foreignKeyName: "price_history_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
+            referencedRelation: "current_market_price"
+            referencedColumns: ["exchange_code"]
+          },
+          {
+            foreignKeyName: "price_history_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
             referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
+          },
+          {
+            foreignKeyName: "price_history_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
+            referencedRelation: "order_book"
+            referencedColumns: ["exchange_code"]
           },
         ]
       }
@@ -326,7 +354,7 @@ export type Database = {
         Row: {
           average_purchase_price_in_cents: number | null
           bot_id: number
-          company_id: number
+          company_id: string
           last_updated_at: string
           shareholding_id: number
           shares: number
@@ -334,7 +362,7 @@ export type Database = {
         Insert: {
           average_purchase_price_in_cents?: number | null
           bot_id: number
-          company_id: number
+          company_id: string
           last_updated_at?: string
           shareholding_id?: number
           shares?: number
@@ -342,7 +370,7 @@ export type Database = {
         Update: {
           average_purchase_price_in_cents?: number | null
           bot_id?: number
-          company_id?: number
+          company_id?: string
           last_updated_at?: string
           shareholding_id?: number
           shares?: number
@@ -382,8 +410,8 @@ export type Database = {
         Row: {
           buy_order_id: number
           buyer_bot_id: number
-          company_id: number
-          exchange_id: number
+          company_id: string
+          exchange_id: string
           executed_at: string
           price_in_cents: number
           quantity: number
@@ -395,8 +423,8 @@ export type Database = {
         Insert: {
           buy_order_id: number
           buyer_bot_id: number
-          company_id: number
-          exchange_id: number
+          company_id: string
+          exchange_id: string
           executed_at?: string
           price_in_cents: number
           quantity: number
@@ -408,8 +436,8 @@ export type Database = {
         Update: {
           buy_order_id?: number
           buyer_bot_id?: number
-          company_id?: number
-          exchange_id?: number
+          company_id?: string
+          exchange_id?: string
           executed_at?: string
           price_in_cents?: number
           quantity?: number
@@ -458,8 +486,22 @@ export type Database = {
             foreignKeyName: "trade_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
+            referencedRelation: "current_market_price"
+            referencedColumns: ["exchange_code"]
+          },
+          {
+            foreignKeyName: "trade_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
             referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
+          },
+          {
+            foreignKeyName: "trade_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
+            referencedRelation: "order_book"
+            referencedColumns: ["exchange_code"]
           },
           {
             foreignKeyName: "trade_sell_order_id_fkey"
@@ -483,9 +525,9 @@ export type Database = {
         Row: {
           ask_price: number | null
           bid_price: number | null
-          company_id: number | null
+          company_id: string | null
           exchange_code: string | null
-          exchange_id: number | null
+          exchange_id: string | null
           last_trade_time: string | null
           spread: number | null
           ticker_symbol: string | null
@@ -495,16 +537,30 @@ export type Database = {
             foreignKeyName: "company_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
+            referencedRelation: "current_market_price"
+            referencedColumns: ["exchange_code"]
+          },
+          {
+            foreignKeyName: "company_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
             referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
+          },
+          {
+            foreignKeyName: "company_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
+            referencedRelation: "order_book"
+            referencedColumns: ["exchange_code"]
           },
         ]
       }
       order_book: {
         Row: {
-          company_id: number | null
+          company_id: string | null
           exchange_code: string | null
-          exchange_id: number | null
+          exchange_id: string | null
           is_buy: boolean | null
           oldest_order_time: string | null
           price_in_cents: number | null
@@ -516,8 +572,22 @@ export type Database = {
             foreignKeyName: "company_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
+            referencedRelation: "current_market_price"
+            referencedColumns: ["exchange_code"]
+          },
+          {
+            foreignKeyName: "company_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
             referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
+          },
+          {
+            foreignKeyName: "company_exchange_id_fkey"
+            columns: ["exchange_id"]
+            isOneToOne: false
+            referencedRelation: "order_book"
+            referencedColumns: ["exchange_code"]
           },
         ]
       }

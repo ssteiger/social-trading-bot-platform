@@ -16,6 +16,7 @@ create table public.exchanges (
 async function createExchanges(supabase: SupabaseClient) {
 	const exchanges = [
 		{
+			exchange_id: "HAM",
 			exchange_name: "Hamburg Stock Exchange",
 			exchange_code: "HAM",
 			trading_fee_percent: 0.15,

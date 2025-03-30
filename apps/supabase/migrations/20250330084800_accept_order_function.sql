@@ -7,8 +7,8 @@ CREATE OR REPLACE FUNCTION public.accept_order(
 ) RETURNS VOID AS $$
 DECLARE
   v_order RECORD;
-  v_company_id INTEGER;
-  v_exchange_id INTEGER;
+  v_company_id VARCHAR(10);
+  v_exchange_id VARCHAR(10);
   v_is_buy BOOLEAN;
   v_price_in_cents BIGINT;
   v_creator_bot_id INTEGER;
