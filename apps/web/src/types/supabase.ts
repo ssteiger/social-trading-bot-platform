@@ -34,7 +34,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      bots: {
+      bot: {
         Row: {
           background_story: string | null
           bot_character_description: string | null
@@ -64,7 +64,7 @@ export type Database = {
         }
         Relationships: []
       }
-      companies: {
+      company: {
         Row: {
           company_id: number
           company_name: string
@@ -97,22 +97,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "companies_creator_bot_id_fkey"
+            foreignKeyName: "company_creator_bot_id_fkey"
             columns: ["creator_bot_id"]
             isOneToOne: false
-            referencedRelation: "bots"
+            referencedRelation: "bot"
             referencedColumns: ["bot_id"]
           },
           {
-            foreignKeyName: "companies_exchange_id_fkey"
+            foreignKeyName: "company_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
-            referencedRelation: "exchanges"
+            referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
           },
         ]
       }
-      exchanges: {
+      exchange: {
         Row: {
           created_at: string
           exchange_code: string
@@ -139,43 +139,7 @@ export type Database = {
         }
         Relationships: []
       }
-      order_statuses: {
-        Row: {
-          description: string | null
-          status_id: number
-          status_name: string
-        }
-        Insert: {
-          description?: string | null
-          status_id?: number
-          status_name: string
-        }
-        Update: {
-          description?: string | null
-          status_id?: number
-          status_name?: string
-        }
-        Relationships: []
-      }
-      order_types: {
-        Row: {
-          description: string | null
-          order_type_id: number
-          type_name: string
-        }
-        Insert: {
-          description?: string | null
-          order_type_id?: number
-          type_name: string
-        }
-        Update: {
-          description?: string | null
-          order_type_id?: number
-          type_name?: string
-        }
-        Relationships: []
-      }
-      orders: {
+      order: {
         Row: {
           bot_id: number
           company_id: number
@@ -184,12 +148,12 @@ export type Database = {
           is_buy: boolean
           last_updated_at: string
           order_id: number
-          order_type_id: number
+          order_type: Database["public"]["Enums"]["order_type_enum"]
           price_in_cents: number
           quantity: number
           quantity_filled: number
           quantity_open: number | null
-          status_id: number
+          status: Database["public"]["Enums"]["order_status_enum"]
         }
         Insert: {
           bot_id: number
@@ -199,12 +163,12 @@ export type Database = {
           is_buy: boolean
           last_updated_at?: string
           order_id?: number
-          order_type_id: number
+          order_type: Database["public"]["Enums"]["order_type_enum"]
           price_in_cents: number
           quantity: number
           quantity_filled?: number
           quantity_open?: number | null
-          status_id: number
+          status?: Database["public"]["Enums"]["order_status_enum"]
         }
         Update: {
           bot_id?: number
@@ -214,55 +178,41 @@ export type Database = {
           is_buy?: boolean
           last_updated_at?: string
           order_id?: number
-          order_type_id?: number
+          order_type?: Database["public"]["Enums"]["order_type_enum"]
           price_in_cents?: number
           quantity?: number
           quantity_filled?: number
           quantity_open?: number | null
-          status_id?: number
+          status?: Database["public"]["Enums"]["order_status_enum"]
         }
         Relationships: [
           {
-            foreignKeyName: "orders_bot_id_fkey"
+            foreignKeyName: "order_bot_id_fkey"
             columns: ["bot_id"]
             isOneToOne: false
-            referencedRelation: "bots"
+            referencedRelation: "bot"
             referencedColumns: ["bot_id"]
           },
           {
-            foreignKeyName: "orders_company_id_fkey"
+            foreignKeyName: "order_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "company"
             referencedColumns: ["company_id"]
           },
           {
-            foreignKeyName: "orders_company_id_fkey"
+            foreignKeyName: "order_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "current_market_prices"
+            referencedRelation: "current_market_price"
             referencedColumns: ["company_id"]
           },
           {
-            foreignKeyName: "orders_company_id_fkey"
+            foreignKeyName: "order_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "order_book"
             referencedColumns: ["company_id"]
-          },
-          {
-            foreignKeyName: "orders_order_type_id_fkey"
-            columns: ["order_type_id"]
-            isOneToOne: false
-            referencedRelation: "order_types"
-            referencedColumns: ["order_type_id"]
-          },
-          {
-            foreignKeyName: "orders_status_id_fkey"
-            columns: ["status_id"]
-            isOneToOne: false
-            referencedRelation: "order_statuses"
-            referencedColumns: ["status_id"]
           },
         ]
       }
@@ -308,14 +258,14 @@ export type Database = {
             foreignKeyName: "price_history_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "company"
             referencedColumns: ["company_id"]
           },
           {
             foreignKeyName: "price_history_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "current_market_prices"
+            referencedRelation: "current_market_price"
             referencedColumns: ["company_id"]
           },
           {
@@ -329,12 +279,12 @@ export type Database = {
             foreignKeyName: "price_history_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
-            referencedRelation: "exchanges"
+            referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
           },
         ]
       }
-      shareholdings: {
+      shareholding: {
         Row: {
           average_purchase_price_in_cents: number | null
           bot_id: number
@@ -361,28 +311,28 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "shareholdings_bot_id_fkey"
+            foreignKeyName: "shareholding_bot_id_fkey"
             columns: ["bot_id"]
             isOneToOne: false
-            referencedRelation: "bots"
+            referencedRelation: "bot"
             referencedColumns: ["bot_id"]
           },
           {
-            foreignKeyName: "shareholdings_company_id_fkey"
+            foreignKeyName: "shareholding_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "company"
             referencedColumns: ["company_id"]
           },
           {
-            foreignKeyName: "shareholdings_company_id_fkey"
+            foreignKeyName: "shareholding_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "current_market_prices"
+            referencedRelation: "current_market_price"
             referencedColumns: ["company_id"]
           },
           {
-            foreignKeyName: "shareholdings_company_id_fkey"
+            foreignKeyName: "shareholding_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "order_book"
@@ -390,7 +340,7 @@ export type Database = {
           },
         ]
       }
-      trades: {
+      trade: {
         Row: {
           buy_order_id: number
           buyer_bot_id: number
@@ -432,80 +382,82 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "trades_buy_order_id_fkey"
+            foreignKeyName: "trade_buy_order_id_fkey"
             columns: ["buy_order_id"]
             isOneToOne: false
-            referencedRelation: "orders"
+            referencedRelation: "order"
             referencedColumns: ["order_id"]
           },
           {
-            foreignKeyName: "trades_buyer_bot_id_fkey"
+            foreignKeyName: "trade_buyer_bot_id_fkey"
             columns: ["buyer_bot_id"]
             isOneToOne: false
-            referencedRelation: "bots"
+            referencedRelation: "bot"
             referencedColumns: ["bot_id"]
           },
           {
-            foreignKeyName: "trades_company_id_fkey"
+            foreignKeyName: "trade_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "company"
             referencedColumns: ["company_id"]
           },
           {
-            foreignKeyName: "trades_company_id_fkey"
+            foreignKeyName: "trade_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "current_market_prices"
+            referencedRelation: "current_market_price"
             referencedColumns: ["company_id"]
           },
           {
-            foreignKeyName: "trades_company_id_fkey"
+            foreignKeyName: "trade_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "order_book"
             referencedColumns: ["company_id"]
           },
           {
-            foreignKeyName: "trades_exchange_id_fkey"
+            foreignKeyName: "trade_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
-            referencedRelation: "exchanges"
+            referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
           },
           {
-            foreignKeyName: "trades_sell_order_id_fkey"
+            foreignKeyName: "trade_sell_order_id_fkey"
             columns: ["sell_order_id"]
             isOneToOne: false
-            referencedRelation: "orders"
+            referencedRelation: "order"
             referencedColumns: ["order_id"]
           },
           {
-            foreignKeyName: "trades_seller_bot_id_fkey"
+            foreignKeyName: "trade_seller_bot_id_fkey"
             columns: ["seller_bot_id"]
             isOneToOne: false
-            referencedRelation: "bots"
+            referencedRelation: "bot"
             referencedColumns: ["bot_id"]
           },
         ]
       }
     }
     Views: {
-      current_market_prices: {
+      current_market_price: {
         Row: {
+          ask_price: number | null
+          bid_price: number | null
           company_id: number | null
-          current_price_in_cents: number | null
           exchange_code: string | null
           exchange_id: number | null
           last_trade_time: string | null
+          spread: number | null
           ticker_symbol: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "companies_exchange_id_fkey"
+            foreignKeyName: "company_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
-            referencedRelation: "exchanges"
+            referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
           },
         ]
@@ -523,10 +475,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "companies_exchange_id_fkey"
+            foreignKeyName: "company_exchange_id_fkey"
             columns: ["exchange_id"]
             isOneToOne: false
-            referencedRelation: "exchanges"
+            referencedRelation: "exchange"
             referencedColumns: ["exchange_id"]
           },
         ]
@@ -544,7 +496,14 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      order_status_enum:
+        | "pending"
+        | "active"
+        | "filled"
+        | "partially_filled"
+        | "cancelled"
+        | "expired"
+      order_type_enum: "market" | "limit" | "stop"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -662,7 +621,17 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      order_status_enum: [
+        "pending",
+        "active",
+        "filled",
+        "partially_filled",
+        "cancelled",
+        "expired",
+      ],
+      order_type_enum: ["market", "limit", "stop"],
+    },
   },
 } as const
 

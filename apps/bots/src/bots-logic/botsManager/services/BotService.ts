@@ -14,7 +14,7 @@ export class BotService {
 	 */
 	async getBotById({ bot_id }: { bot_id: number }): Promise<Bot | null> {
 		const { data, error } = await this.supabase
-			.from("bots")
+			.from("bot")
 			.select("*")
 			.eq("bot_id", bot_id)
 			.single();
@@ -31,7 +31,7 @@ export class BotService {
 	 * Get all bots from the database
 	 */
 	async getAllBots(): Promise<Bot[]> {
-		const { data, error } = await this.supabase.from("bots").select("*");
+		const { data, error } = await this.supabase.from("bot").select("*");
 
 		if (error || !data) {
 			console.error("Error getting bots:", error);
@@ -48,7 +48,7 @@ export class BotService {
 		bot_id,
 	}: { bot_id: number }): Promise<Shareholding[]> {
 		const { data, error } = await this.supabase
-			.from("shareholdings")
+			.from("shareholding")
 			.select("*")
 			.eq("bot_id", bot_id);
 

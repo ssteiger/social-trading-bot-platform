@@ -5,7 +5,7 @@ async function createBots(supabase: SupabaseClient) {
 	for (const bots of seedData) {
 		const { company, ...botData } = bots;
 		const { data, error } = await supabase
-			.from("bots")
+			.from("bot")
 			.insert(botData)
 			.select()
 			.single();

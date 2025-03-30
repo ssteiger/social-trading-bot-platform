@@ -8,8 +8,6 @@ export type {
 	NewCompany,
 	NewExchange,
 	NewOrder,
-	NewOrderStatus,
-	NewOrderType,
 	NewPriceHistory,
 	NewShareholding,
 	NewTrade,

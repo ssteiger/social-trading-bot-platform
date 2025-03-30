@@ -14,25 +14,25 @@ export class DatabaseService {
 	async resetDatabase(): Promise<void> {
 		try {
 			// Delete all bot trades
-			await this.supabase.from("trades").delete().not("trade_id", "is", null);
+			await this.supabase.from("trade").delete().not("trade_id", "is", null);
 
 			// Delete all orders
-			await this.supabase.from("orders").delete().not("order_id", "is", null);
+			await this.supabase.from("order").delete().not("order_id", "is", null);
 
 			// Delete all shareholdings
 			await this.supabase
-				.from("shareholdings")
+				.from("shareholding")
 				.delete()
 				.not("shareholding_id", "is", null);
 
 			// Delete all companies created by bots
 			await this.supabase
-				.from("companies")
+				.from("company")
 				.delete()
 				.not("company_id", "is", null);
 
 			// Delete all bots
-			await this.supabase.from("bots").delete().not("bot_id", "is", null);
+			await this.supabase.from("bot").delete().not("bot_id", "is", null);
 
 			console.log("Successfully cleared database tables");
 		} catch (error) {

@@ -4,8 +4,8 @@
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.bots": {
-      "name": "bots",
+    "public.bot": {
+      "name": "bot",
       "schema": "",
       "columns": {
         "bot_id": {
@@ -62,8 +62,8 @@
       "policies": {},
       "isRLSEnabled": false
     },
-    "public.companies": {
-      "name": "companies",
+    "public.company": {
+      "name": "company",
       "schema": "",
       "columns": {
         "company_id": {
@@ -118,10 +118,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "companies_creator_bot_id_fkey": {
-          "name": "companies_creator_bot_id_fkey",
-          "tableFrom": "companies",
-          "tableTo": "bots",
+        "company_creator_bot_id_fkey": {
+          "name": "company_creator_bot_id_fkey",
+          "tableFrom": "company",
+          "tableTo": "bot",
           "schemaTo": "public",
           "columnsFrom": [
             "creator_bot_id"
@@ -132,10 +132,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "companies_exchange_id_fkey": {
-          "name": "companies_exchange_id_fkey",
-          "tableFrom": "companies",
-          "tableTo": "exchanges",
+        "company_exchange_id_fkey": {
+          "name": "company_exchange_id_fkey",
+          "tableFrom": "company",
+          "tableTo": "exchange",
           "schemaTo": "public",
           "columnsFrom": [
             "exchange_id"
@@ -149,21 +149,21 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "companies_exchange_id_ticker_symbol_key": {
+        "company_exchange_id_ticker_symbol_key": {
           "columns": [
             "exchange_id",
             "ticker_symbol"
           ],
           "nullsNotDistinct": false,
-          "name": "companies_exchange_id_ticker_symbol_key"
+          "name": "company_exchange_id_ticker_symbol_key"
         }
       },
       "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
-    "public.exchanges": {
-      "name": "exchanges",
+    "public.exchange": {
+      "name": "exchange",
       "schema": "",
       "columns": {
         "exchange_id": {
@@ -210,20 +210,20 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "exchanges_exchange_code_key": {
+        "exchange_exchange_code_key": {
           "columns": [
             "exchange_code"
           ],
           "nullsNotDistinct": false,
-          "name": "exchanges_exchange_code_key"
+          "name": "exchange_exchange_code_key"
         }
       },
       "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
-    "public.shareholdings": {
-      "name": "shareholdings",
+    "public.shareholding": {
+      "name": "shareholding",
       "schema": "",
       "columns": {
         "shareholding_id": {
@@ -266,8 +266,8 @@
         }
       },
       "indexes": {
-        "idx_shareholdings_bot_id": {
-          "name": "idx_shareholdings_bot_id",
+        "idx_shareholding_bot_id": {
+          "name": "idx_shareholding_bot_id",
           "columns": [
             {
               "expression": "bot_id",
@@ -284,10 +284,10 @@
         }
       },
       "foreignKeys": {
-        "shareholdings_bot_id_fkey": {
-          "name": "shareholdings_bot_id_fkey",
-          "tableFrom": "shareholdings",
-          "tableTo": "bots",
+        "shareholding_bot_id_fkey": {
+          "name": "shareholding_bot_id_fkey",
+          "tableFrom": "shareholding",
+          "tableTo": "bot",
           "schemaTo": "public",
           "columnsFrom": [
             "bot_id"
@@ -298,10 +298,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "shareholdings_company_id_fkey": {
-          "name": "shareholdings_company_id_fkey",
-          "tableFrom": "shareholdings",
-          "tableTo": "companies",
+        "shareholding_company_id_fkey": {
+          "name": "shareholding_company_id_fkey",
+          "tableFrom": "shareholding",
+          "tableTo": "company",
           "schemaTo": "public",
           "columnsFrom": [
             "company_id"
@@ -315,21 +315,21 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "shareholdings_bot_id_company_id_key": {
+        "shareholding_bot_id_company_id_key": {
           "columns": [
             "bot_id",
             "company_id"
           ],
           "nullsNotDistinct": false,
-          "name": "shareholdings_bot_id_company_id_key"
+          "name": "shareholding_bot_id_company_id_key"
         }
       },
       "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
-    "public.orders": {
-      "name": "orders",
+    "public.order": {
+      "name": "order",
       "schema": "",
       "columns": {
         "order_id": {
@@ -350,9 +350,10 @@
           "primaryKey": false,
           "notNull": true
         },
-        "order_type_id": {
-          "name": "order_type_id",
-          "type": "integer",
+        "order_type": {
+          "name": "order_type",
+          "type": "order_type_enum",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -391,11 +392,13 @@
             "type": "stored"
           }
         },
-        "status_id": {
-          "name": "status_id",
-          "type": "integer",
+        "status": {
+          "name": "status",
+          "type": "order_status_enum",
+          "typeSchema": "public",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'pending'"
         },
         "created_at": {
           "name": "created_at",
@@ -419,8 +422,8 @@
         }
       },
       "indexes": {
-        "idx_orders_bot_id": {
-          "name": "idx_orders_bot_id",
+        "idx_order_bot_id": {
+          "name": "idx_order_bot_id",
           "columns": [
             {
               "expression": "bot_id",
@@ -435,8 +438,8 @@
           "method": "btree",
           "with": {}
         },
-        "idx_orders_company_id": {
-          "name": "idx_orders_company_id",
+        "idx_order_company_id": {
+          "name": "idx_order_company_id",
           "columns": [
             {
               "expression": "company_id",
@@ -451,14 +454,14 @@
           "method": "btree",
           "with": {}
         },
-        "idx_orders_status_id": {
-          "name": "idx_orders_status_id",
+        "idx_order_status": {
+          "name": "idx_order_status",
           "columns": [
             {
-              "expression": "status_id",
+              "expression": "status",
               "asc": true,
               "nulls": "last",
-              "opclass": "int4_ops",
+              "opclass": "enum_ops",
               "isExpression": false
             }
           ],
@@ -469,10 +472,10 @@
         }
       },
       "foreignKeys": {
-        "orders_bot_id_fkey": {
-          "name": "orders_bot_id_fkey",
-          "tableFrom": "orders",
-          "tableTo": "bots",
+        "order_bot_id_fkey": {
+          "name": "order_bot_id_fkey",
+          "tableFrom": "order",
+          "tableTo": "bot",
           "schemaTo": "public",
           "columnsFrom": [
             "bot_id"
@@ -483,44 +486,16 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "orders_company_id_fkey": {
-          "name": "orders_company_id_fkey",
-          "tableFrom": "orders",
-          "tableTo": "companies",
+        "order_company_id_fkey": {
+          "name": "order_company_id_fkey",
+          "tableFrom": "order",
+          "tableTo": "company",
           "schemaTo": "public",
           "columnsFrom": [
             "company_id"
           ],
           "columnsTo": [
             "company_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "orders_order_type_id_fkey": {
-          "name": "orders_order_type_id_fkey",
-          "tableFrom": "orders",
-          "tableTo": "order_types",
-          "schemaTo": "public",
-          "columnsFrom": [
-            "order_type_id"
-          ],
-          "columnsTo": [
-            "order_type_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "orders_status_id_fkey": {
-          "name": "orders_status_id_fkey",
-          "tableFrom": "orders",
-          "tableTo": "order_statuses",
-          "schemaTo": "public",
-          "columnsFrom": [
-            "status_id"
-          ],
-          "columnsTo": [
-            "status_id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -532,86 +507,8 @@
       "policies": {},
       "isRLSEnabled": false
     },
-    "public.order_types": {
-      "name": "order_types",
-      "schema": "",
-      "columns": {
-        "order_type_id": {
-          "name": "order_type_id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "type_name": {
-          "name": "type_name",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "order_types_type_name_key": {
-          "columns": [
-            "type_name"
-          ],
-          "nullsNotDistinct": false,
-          "name": "order_types_type_name_key"
-        }
-      },
-      "checkConstraints": {},
-      "policies": {},
-      "isRLSEnabled": false
-    },
-    "public.order_statuses": {
-      "name": "order_statuses",
-      "schema": "",
-      "columns": {
-        "status_id": {
-          "name": "status_id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "status_name": {
-          "name": "status_name",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "order_statuses_status_name_key": {
-          "columns": [
-            "status_name"
-          ],
-          "nullsNotDistinct": false,
-          "name": "order_statuses_status_name_key"
-        }
-      },
-      "checkConstraints": {},
-      "policies": {},
-      "isRLSEnabled": false
-    },
-    "public.trades": {
-      "name": "trades",
+    "public.trade": {
+      "name": "trade",
       "schema": "",
       "columns": {
         "trade_id": {
@@ -683,8 +580,8 @@
         }
       },
       "indexes": {
-        "idx_trades_company_id": {
-          "name": "idx_trades_company_id",
+        "idx_trade_company_id": {
+          "name": "idx_trade_company_id",
           "columns": [
             {
               "expression": "company_id",
@@ -699,8 +596,8 @@
           "method": "btree",
           "with": {}
         },
-        "idx_trades_executed_at": {
-          "name": "idx_trades_executed_at",
+        "idx_trade_executed_at": {
+          "name": "idx_trade_executed_at",
           "columns": [
             {
               "expression": "executed_at",
@@ -717,10 +614,10 @@
         }
       },
       "foreignKeys": {
-        "trades_exchange_id_fkey": {
-          "name": "trades_exchange_id_fkey",
-          "tableFrom": "trades",
-          "tableTo": "exchanges",
+        "trade_exchange_id_fkey": {
+          "name": "trade_exchange_id_fkey",
+          "tableFrom": "trade",
+          "tableTo": "exchange",
           "schemaTo": "public",
           "columnsFrom": [
             "exchange_id"
@@ -731,10 +628,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "trades_company_id_fkey": {
-          "name": "trades_company_id_fkey",
-          "tableFrom": "trades",
-          "tableTo": "companies",
+        "trade_company_id_fkey": {
+          "name": "trade_company_id_fkey",
+          "tableFrom": "trade",
+          "tableTo": "company",
           "schemaTo": "public",
           "columnsFrom": [
             "company_id"
@@ -745,10 +642,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "trades_buy_order_id_fkey": {
-          "name": "trades_buy_order_id_fkey",
-          "tableFrom": "trades",
-          "tableTo": "orders",
+        "trade_buy_order_id_fkey": {
+          "name": "trade_buy_order_id_fkey",
+          "tableFrom": "trade",
+          "tableTo": "order",
           "schemaTo": "public",
           "columnsFrom": [
             "buy_order_id"
@@ -759,10 +656,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "trades_sell_order_id_fkey": {
-          "name": "trades_sell_order_id_fkey",
-          "tableFrom": "trades",
-          "tableTo": "orders",
+        "trade_sell_order_id_fkey": {
+          "name": "trade_sell_order_id_fkey",
+          "tableFrom": "trade",
+          "tableTo": "order",
           "schemaTo": "public",
           "columnsFrom": [
             "sell_order_id"
@@ -773,10 +670,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "trades_buyer_bot_id_fkey": {
-          "name": "trades_buyer_bot_id_fkey",
-          "tableFrom": "trades",
-          "tableTo": "bots",
+        "trade_buyer_bot_id_fkey": {
+          "name": "trade_buyer_bot_id_fkey",
+          "tableFrom": "trade",
+          "tableTo": "bot",
           "schemaTo": "public",
           "columnsFrom": [
             "buyer_bot_id"
@@ -787,10 +684,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "trades_seller_bot_id_fkey": {
-          "name": "trades_seller_bot_id_fkey",
-          "tableFrom": "trades",
-          "tableTo": "bots",
+        "trade_seller_bot_id_fkey": {
+          "name": "trade_seller_bot_id_fkey",
+          "tableFrom": "trade",
+          "tableTo": "bot",
           "schemaTo": "public",
           "columnsFrom": [
             "seller_bot_id"
@@ -902,7 +799,7 @@
         "price_history_company_id_fkey": {
           "name": "price_history_company_id_fkey",
           "tableFrom": "price_history",
-          "tableTo": "companies",
+          "tableTo": "company",
           "schemaTo": "public",
           "columnsFrom": [
             "company_id"
@@ -916,7 +813,7 @@
         "price_history_exchange_id_fkey": {
           "name": "price_history_exchange_id_fkey",
           "tableFrom": "price_history",
-          "tableTo": "exchanges",
+          "tableTo": "exchange",
           "schemaTo": "public",
           "columnsFrom": [
             "exchange_id"
@@ -945,57 +842,34 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.order_status_enum": {
+      "name": "order_status_enum",
+      "values": [
+        "pending",
+        "active",
+        "filled",
+        "partially_filled",
+        "cancelled",
+        "expired"
+      ],
+      "schema": "public"
+    },
+    "public.order_type_enum": {
+      "name": "order_type_enum",
+      "values": [
+        "market",
+        "limit",
+        "stop"
+      ],
+      "schema": "public"
+    }
+  },
   "schemas": {},
   "sequences": {},
   "roles": {},
   "policies": {},
   "views": {
-    "public.current_market_prices": {
-      "name": "current_market_prices",
-      "schema": "public",
-      "columns": {
-        "company_id": {
-          "name": "company_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ticker_symbol": {
-          "name": "ticker_symbol",
-          "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "exchange_id": {
-          "name": "exchange_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "exchange_code": {
-          "name": "exchange_code",
-          "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "current_price_in_cents": {
-          "name": "current_price_in_cents",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_trade_time": {
-          "name": "last_trade_time",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "isExisting": false,
-      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, t.price_in_cents AS current_price_in_cents, t.executed_at AS last_trade_time FROM companies c JOIN exchanges e ON c.exchange_id = e.exchange_id LEFT JOIN trades t ON c.company_id = t.company_id WHERE t.executed_at = (( SELECT max(trades.executed_at) AS max FROM trades WHERE trades.company_id = c.company_id))",
-      "materialized": false
-    },
     "public.order_book": {
       "name": "order_book",
       "schema": "public",
@@ -1050,7 +924,64 @@
         }
       },
       "isExisting": false,
-      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM orders o JOIN companies c ON o.company_id = c.company_id JOIN exchanges e ON c.exchange_id = e.exchange_id WHERE o.status_id = (( SELECT order_statuses.status_id FROM order_statuses WHERE order_statuses.status_name::text = 'active'::text)) GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC",
+      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM \"order\" o JOIN company c ON o.company_id = c.company_id JOIN exchange e ON c.exchange_id = e.exchange_id WHERE o.status = 'active'::order_status_enum GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC",
+      "materialized": false
+    },
+    "public.current_market_price": {
+      "name": "current_market_price",
+      "schema": "public",
+      "columns": {
+        "company_id": {
+          "name": "company_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ticker_symbol": {
+          "name": "ticker_symbol",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exchange_id": {
+          "name": "exchange_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exchange_code": {
+          "name": "exchange_code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bid_price": {
+          "name": "bid_price",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ask_price": {
+          "name": "ask_price",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spread": {
+          "name": "spread",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_trade_time": {
+          "name": "last_trade_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "isExisting": false,
+      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, ( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = true AND \"order\".status = 'active'::order_status_enum AND \"order\".quantity_open > 0) AS bid_price, ( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = false AND \"order\".status = 'active'::order_status_enum AND \"order\".quantity_open > 0) AS ask_price, (( SELECT min(\"order\".price_in_cents) AS min FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = false AND \"order\".status = 'active'::order_status_enum AND \"order\".quantity_open > 0)) - (( SELECT max(\"order\".price_in_cents) AS max FROM \"order\" WHERE \"order\".company_id = c.company_id AND \"order\".is_buy = true AND \"order\".status = 'active'::order_status_enum AND \"order\".quantity_open > 0)) AS spread, ( SELECT trade.executed_at FROM trade WHERE trade.company_id = c.company_id ORDER BY trade.executed_at DESC LIMIT 1) AS last_trade_time FROM company c JOIN exchange e ON c.exchange_id = e.exchange_id",
       "materialized": false
     }
   },

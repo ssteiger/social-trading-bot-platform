@@ -15,7 +15,7 @@ export class CompanyService {
 	async getCompanies(): Promise<
 		(Company & { getCurrentPrice: () => number })[]
 	> {
-		const { data, error } = await this.supabase.from("companies").select("*");
+		const { data, error } = await this.supabase.from("company").select("*");
 
 		if (error || !data) {
 			console.error("Error getting companies:", error);
@@ -30,7 +30,7 @@ export class CompanyService {
 		const priceMap = new Map();
 		if (priceData) {
 			for (const price of priceData) {
-				priceMap.set(price.company_id, price.current_price_in_cents);
+				priceMap.set(price.company_id, price.ask_price);
 			}
 		}
 

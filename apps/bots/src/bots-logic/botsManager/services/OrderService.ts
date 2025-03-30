@@ -27,29 +27,18 @@ export class OrderService {
 		orderData,
 	}: { bot_id: number; orderData: NewOrder }): Promise<boolean> {
 		try {
-			// Determine status ID for pending orders
-			const { data: statusData } = await this.supabase
-				.from("order_statuses")
-				.select("status_id")
-				.eq("status_name", "pending")
-				.single();
-
-			if (!statusData) {
-				throw new Error("Could not determine order status ID");
-			}
-
 			const newOrder = {
 				bot_id,
 				company_id: orderData.company_id,
-				order_type_id: orderData.order_type_id,
+				order_type: orderData.order_type,
 				is_buy: orderData.is_buy,
 				price_in_cents: Number(orderData.price_in_cents),
 				quantity: orderData.quantity,
-				status_id: statusData.status_id,
+				status: "pending",
 			} as NewOrder;
 
 			// Place the order
-			const { error } = await this.supabase.from("orders").insert(newOrder);
+			const { error } = await this.supabase.from("order").insert(newOrder);
 
 			if (error) {
 				console.error("Error placing order:", error);
@@ -68,23 +57,11 @@ export class OrderService {
 	 */
 	async cancelOrder(orderId: number): Promise<boolean> {
 		try {
-			// First, get the order status IDs
-			const { data: statusData } = await this.supabase
-				.from("order_statuses")
-				.select("status_id")
-				.eq("status_name", "cancelled")
-				.single();
-
-			if (!statusData) {
-				console.error("Could not determine cancelled status ID");
-				return false;
-			}
-
 			// Cancel the order by changing its status to cancelled
 			const { error } = await this.supabase
-				.from("orders")
+				.from("order")
 				.update({
-					status_id: statusData.status_id,
+					status: "cancelled",
 					last_updated_at: new Date().toISOString(),
 				})
 				.eq("order_id", orderId);
@@ -113,19 +90,18 @@ export class OrderService {
 
 			// 1. Get the order details
 			const { data: orderData, error: orderError } = await this.supabase
-				.from("orders")
+				.from("order")
 				.select(`
-				order_id,
-				bot_id,
-				company_id,
-				is_buy,
-				price_in_cents,
-				quantity,
-				quantity_filled,
-				status_id,
-				order_types(type_name),
-				order_statuses(status_name)
-			`)
+					order_id,
+					bot_id,
+					company_id,
+					is_buy,
+					price_in_cents,
+					quantity,
+					quantity_filled,
+					status,
+					order_type
+				`)
 				.eq("order_id", orderId)
 				.single();
 
@@ -136,12 +112,9 @@ export class OrderService {
 
 			// 2. Verify that the order is available to be accepted
 			// Check if status is pending or active
-			if (
-				orderData.order_statuses.status_name !== "pending" &&
-				orderData.order_statuses.status_name !== "active"
-			) {
+			if (orderData.status !== "pending" && orderData.status !== "active") {
 				console.error(
-					`Order ${orderId} is not available (status: ${orderData.order_statuses.status_name})`,
+					`Order ${orderId} is not available (status: ${orderData.status})`,
 				);
 				return false;
 			}
@@ -183,7 +156,7 @@ export class OrderService {
 
 			// 6. Get the company data to record the trade properly
 			const { data: companyData, error: companyError } = await this.supabase
-				.from("companies")
+				.from("company")
 				.select("exchange_id")
 				.eq("company_id", orderData.company_id)
 				.single();
@@ -198,7 +171,7 @@ export class OrderService {
 
 			// 7. Get the exchange information for fees
 			const { data: exchangeData, error: exchangeError } = await this.supabase
-				.from("exchanges")
+				.from("exchange")
 				.select("trading_fee_percent")
 				.eq("exchange_id", companyData.exchange_id)
 				.single();
@@ -250,33 +223,22 @@ export class OrderService {
 	 * Get active orders for a bot
 	 */
 	async getBotActiveOrders(botId: number) {
-		const { data: statusData } = await this.supabase
-			.from("order_statuses")
-			.select("status_id")
-			.in("status_name", ["active", "partially_filled", "pending"]);
-
-		if (!statusData || statusData.length === 0) {
-			return [];
-		}
-
-		const statusIds = statusData.map((s) => s.status_id);
-
 		const { data, error } = await this.supabase
-			.from("orders")
+			.from("order")
 			.select(`
 				order_id,
 				company_id,
-				order_type_id,
+				order_type,
 				is_buy,
 				price_in_cents,
 				quantity,
 				quantity_filled,
-				status_id,
+				status,
 				created_at,
 				expires_at
 			`)
 			.eq("bot_id", botId)
-			.in("status_id", statusIds);
+			.eq("status", "active");
 
 		if (error || !data) {
 			console.error("Error getting active orders:", error);

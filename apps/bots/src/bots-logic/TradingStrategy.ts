@@ -7,15 +7,15 @@ import type {
 	NewCompany,
 	NewExchange,
 	NewOrder,
-	NewOrderStatus,
-	NewOrderType,
 	NewPriceHistory,
 	NewShareholding,
 	NewTrade,
 	Order,
 	OrderBook,
 	OrderStatus,
+	OrderStatusEnum,
 	OrderType,
+	OrderTypeEnum,
 	PriceHistory,
 	Shareholding,
 	Trade,
@@ -141,8 +141,8 @@ export class TradingStrategy {
 			const orderData: NewOrder = {
 				bot_id: botId,
 				company_id: companyId,
-				order_type_id: 1, // Assuming 1 is limit order
-				status_id: 1, // Assuming 1 is active/pending
+				order_type: "limit", // Assuming 1 is limit order
+				status: OrderStatusEnum.ACTIVE,
 				is_buy: isBuy,
 				price_in_cents,
 				quantity: quantity,

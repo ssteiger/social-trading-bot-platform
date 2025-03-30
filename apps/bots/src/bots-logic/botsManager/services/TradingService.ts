@@ -47,7 +47,7 @@ export class TradingService {
 
 				// Update bot's last active timestamp
 				await this.supabase
-					.from("bots")
+					.from("bot")
 					.update({ last_active_at: new Date().toISOString() })
 					.eq("bot_id", botId);
 

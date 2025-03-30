@@ -1,5 +1,9 @@
+import {
+	OrderStatusEnum,
+	OrderTypeEnum,
+} from "@social-trading-bot-platform/db-drizzle";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { BotsManager } from "./bots-logic/botsManager";
+import { BotsManager, type NewOrder } from "./bots-logic/botsManager";
 import type { Database } from "./types/supabase";
 
 async function startSimpleBots(supabase: SupabaseClient<Database>) {
@@ -69,17 +73,27 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
 							const price = randomCompany.getCurrentPrice() * priceAdjustment;
 
 							if (quantity > 0) {
+								console.log("Creating order:", {
+									bot_id: bot.bot_id,
+									company_id: randomCompany.company_id,
+									order_type: OrderTypeEnum.MARKET,
+									is_buy: isBuy,
+									price_in_cents: Math.round(price * 100), // Convert dollars to cents
+									quantity: quantity,
+									status: OrderStatusEnum.ACTIVE,
+								});
+
 								// Place the order
 								const { error: insertError } = await supabase
-									.from("orders")
+									.from("order")
 									.insert({
 										bot_id: bot.bot_id,
 										company_id: randomCompany.company_id,
-										order_type_id: 1, // Market order
+										order_type: OrderTypeEnum.MARKET,
 										is_buy: isBuy,
 										price_in_cents: Math.round(price * 100), // Convert dollars to cents
 										quantity: quantity,
-										status_id: 2, // Active status
+										status: OrderStatusEnum.ACTIVE,
 									});
 
 								if (insertError) {
@@ -99,10 +113,10 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
 					// 2. MATCH EXISTING ORDERS
 					// Fetch open orders that this bot could potentially match
 					const { data: openOrders, error } = await supabase
-						.from("orders")
+						.from("order")
 						.select("*")
 						.neq("bot_id", bot.bot_id)
-						.eq("status_id", 2) // Active status
+						.eq("status", "active") // Active status
 						.gt("quantity_open", 0);
 
 					if (error) {
@@ -138,15 +152,15 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
 								);
 								// Create a matching counter-order
 								const { error: insertError } = await supabase
-									.from("orders")
+									.from("order")
 									.insert({
 										bot_id: bot.bot_id,
 										company_id: order.company_id,
-										order_type_id: 1, // Market order
-										is_buy: !order.is_buy, // Opposite of the open order
+										order_type: OrderTypeEnum.MARKET,
+										is_buy: !order.is_buy,
 										price_in_cents: order.price_in_cents,
 										quantity: order.quantity - order.quantity_filled,
-										status_id: 2, // Active status
+										status: OrderStatusEnum.ACTIVE,
 									});
 
 								if (insertError) {

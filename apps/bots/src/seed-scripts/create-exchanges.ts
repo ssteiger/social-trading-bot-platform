@@ -40,7 +40,7 @@ async function createExchanges(supabase: SupabaseClient) {
 	console.log("Creating exchanges...");
 
 	const { data, error } = await supabase
-		.from("exchanges")
+		.from("exchange")
 		.upsert(exchanges, { onConflict: "exchange_code" })
 		.select();
 

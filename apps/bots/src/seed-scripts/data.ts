@@ -23,7 +23,39 @@ create table public.companies (
   constraint companies_creator_bot_id_fkey foreign KEY (creator_bot_id) references bots (bot_id),
   constraint companies_exchange_id_fkey foreign KEY (exchange_id) references exchanges (exchange_id)
 ) TABLESPACE pg_default;
+
+CREATE TABLE IF NOT EXISTS "orders" (
+	"order_id" serial PRIMARY KEY NOT NULL,
+	"bot_id" integer NOT NULL,
+	"company_id" integer NOT NULL,
+	"order_type" integer NOT NULL,
+	"is_buy" boolean NOT NULL,
+	"price_in_cents" bigint NOT NULL,
+	"quantity" bigint NOT NULL,
+	"quantity_filled" bigint DEFAULT 0 NOT NULL,
+	"quantity_open" bigint GENERATED ALWAYS AS ((quantity - quantity_filled)) STORED,
+	"status" integer NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"expires_at" timestamp,
+	"last_updated_at" timestamp DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "order_types" (
+	"order_type" serial PRIMARY KEY NOT NULL,
+	"type_name" varchar(50) NOT NULL,
+	"description" text,
+	CONSTRAINT "order_types_type_name_key" UNIQUE("type_name")
+);
+
+CREATE TABLE IF NOT EXISTS "order_statuses" (
+	"status" serial PRIMARY KEY NOT NULL,
+	"status_name" varchar(50) NOT NULL,
+	"description" text,
+	CONSTRAINT "order_statuses_status_name_key" UNIQUE("status_name")
+);
 */
+
+import type { OrderType } from "@social-trading-bot-platform/db-drizzle";
 
 // Define our seed bots with associated companies
 const botsWithCompanies = [
@@ -40,6 +72,13 @@ const botsWithCompanies = [
 			total_shares: 10000000,
 			description:
 				"A fintech company specializing in predictive market algorithms that blend traditional technical analysis with AI-driven sentiment analysis from social media, news, and economic indicators to identify market trends before they become mainstream.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2500,
+				quantity: 50000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -55,6 +94,13 @@ const botsWithCompanies = [
 			total_shares: 21000000,
 			description:
 				"A pioneering cryptocurrency research and development firm with investments across multiple blockchain protocols. Known for their early contributions to distributed ledger technology and deep connections with core developers across the industry.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3200,
+				quantity: 40000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -70,6 +116,13 @@ const botsWithCompanies = [
 			total_shares: 5000000,
 			description:
 				"An investment advisory firm specializing in dividend growth strategies for long-term wealth building. Features a proprietary rating system for dividend sustainability and focuses on quality income-generating assets with strong corporate governance.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 4500,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -85,6 +138,13 @@ const botsWithCompanies = [
 			total_shares: 3000000,
 			description:
 				"A forex risk management consultancy that specializes in conservative currency trading strategies and risk mitigation systems. Known for their proprietary 1% risk-per-trade methodology and algorithms that help detect currency manipulation.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2800,
+				quantity: 35000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -100,6 +160,13 @@ const botsWithCompanies = [
 			total_shares: 7500000,
 			description:
 				"A climate-tech venture capital firm that invests in sustainable businesses with measurable environmental and social impact. Uses a proprietary ESG screening methodology to identify companies making genuine contributions while delivering market-beating returns.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3800,
+				quantity: 45000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 
@@ -117,6 +184,13 @@ const botsWithCompanies = [
 			total_shares: 4500000,
 			description:
 				"An investment firm specializing in identifying deeply undervalued companies through forensic accounting analysis and fundamental research. Known for finding hidden assets and overlooked strengths in businesses experiencing temporary setbacks.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2200,
+				quantity: 38000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -132,6 +206,13 @@ const botsWithCompanies = [
 			total_shares: 15000000,
 			description:
 				"A technology investment and research firm focused on identifying early-stage technologies with transformative potential. Uses a proprietary framework to evaluate emerging tech based on adoption curves, developer sentiment, and infrastructure readiness.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 4200,
+				quantity: 55000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -147,6 +228,13 @@ const botsWithCompanies = [
 			total_shares: 8000000,
 			description:
 				"A commodities research and investment firm with deep expertise in natural resources supply chains. Combines on-the-ground operational knowledge with macroeconomic analysis to forecast price movements in energy, metals, and agricultural commodities.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3100,
+				quantity: 42000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -162,6 +250,13 @@ const botsWithCompanies = [
 			total_shares: 6000000,
 			description:
 				"A macroeconomic research firm specializing in long-term economic forecasting through analysis of debt cycles, monetary policy, productivity trends, and demographic shifts. Known for identifying major economic turning points well before consensus.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2300,
+				quantity: 35000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -177,6 +272,13 @@ const botsWithCompanies = [
 			total_shares: 12000000,
 			description:
 				"A biotechnology investment and research firm specializing in evaluating early-stage medical innovations. Uses a systematic framework to assess novel treatments based on their scientific merit, scalability potential, and likely regulatory pathway.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2700,
+				quantity: 40000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -192,6 +294,13 @@ const botsWithCompanies = [
 			total_shares: 5500000,
 			description:
 				"An investment firm specializing in merger arbitrage strategies with a focus on analyzing regulatory risks, financing conditions, and legal aspects of announced transactions. Utilizes proprietary models to identify mispriced deals where market sentiment doesn't reflect actual completion probabilities.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2400,
+				quantity: 32000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -207,6 +316,13 @@ const botsWithCompanies = [
 			total_shares: 9500000,
 			description:
 				"An energy-focused investment firm with expertise across fossil fuels, renewables, and emerging technologies. Specializes in integrated analysis of energy supply chains, regulatory environments, and technological disruptions to identify long-term investment opportunities.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3500,
+				quantity: 50000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -222,6 +338,13 @@ const botsWithCompanies = [
 			total_shares: 11000000,
 			description:
 				"A venture capital firm specializing in financial technology innovations across payments, lending, wealth management, and insurance sectors. Identifies emerging fintech trends and business models that reduce friction in financial services delivery.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3000,
+				quantity: 40000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -237,6 +360,13 @@ const botsWithCompanies = [
 			total_shares: 6800000,
 			description:
 				"An investment firm specializing in food and agricultural technologies, from farm productivity solutions to sustainable supply chain innovations. Focuses on companies introducing economically viable improvements to the global food system.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2600,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -252,6 +382,13 @@ const botsWithCompanies = [
 			total_shares: 9000000,
 			description:
 				"A technology investment firm specializing in robotics and automation systems across manufacturing, logistics, healthcare, and service industries. Identifies technologies crossing the threshold from experimental to commercially viable applications.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3300,
+				quantity: 45000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -267,6 +404,13 @@ const botsWithCompanies = [
 			total_shares: 4500000,
 			description:
 				"An investment firm specializing in luxury and premium consumer brands with enduring appeal, pricing power, and global expansion potential. Focuses on identifying companies that understand the evolving psychology of luxury consumption across cultural markets.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2900,
+				quantity: 35000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -282,6 +426,13 @@ const botsWithCompanies = [
 			total_shares: 7800000,
 			description:
 				"An aerospace investment firm specializing in aviation technologies, satellite systems, launch innovations, and space infrastructure. Evaluates technical feasibility and commercial applications of aerospace developments across civil, commercial, and defense sectors.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3600,
+				quantity: 40000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -297,6 +448,13 @@ const botsWithCompanies = [
 			total_shares: 8500000,
 			description:
 				"A media investment firm specializing in content creation, distribution platforms, and audience engagement technologies. Identifies shifts in consumption patterns and monetization models across entertainment, streaming, gaming, and creator economies.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3400,
+				quantity: 40000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -312,6 +470,13 @@ const botsWithCompanies = [
 			total_shares: 6400000,
 			description:
 				"A retail-focused investment firm specializing in physical store concepts, e-commerce platforms, and integrated shopping experiences. Identifies technologies and formats that enhance customer experience while improving operational efficiency.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2500,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -327,6 +492,13 @@ const botsWithCompanies = [
 			total_shares: 12000000,
 			description:
 				"A technology investment firm specializing in the semiconductor ecosystem, including chip design, manufacturing processes, equipment, and specialized applications. Identifies connections between semiconductor advances and emerging applications across multiple industries.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3700,
+				quantity: 50000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -342,6 +514,13 @@ const botsWithCompanies = [
 			total_shares: 7300000,
 			description:
 				"A transportation investment firm specializing in logistics operations, fleet technologies, and mobility innovations. Identifies opportunities to improve efficiency, sustainability, and reliability across multiple transportation modes.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3200,
+				quantity: 35000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -357,6 +536,13 @@ const botsWithCompanies = [
 			total_shares: 5700000,
 			description:
 				"A water-focused investment firm specializing in infrastructure, treatment technologies, conservation systems, and resource management solutions. Identifies innovations addressing water scarcity and quality challenges across municipal, agricultural, and industrial applications.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2700,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -372,6 +558,13 @@ const botsWithCompanies = [
 			total_shares: 9200000,
 			description:
 				"A gaming investment firm specializing in game development studios, distribution platforms, esports organizations, and interactive technology innovations. Identifies engagement models and technologies that create sustainable player communities and entertainment experiences.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3900,
+				quantity: 50000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -387,6 +580,13 @@ const botsWithCompanies = [
 			total_shares: 8400000,
 			description:
 				"A cybersecurity investment firm specializing in network protection, endpoint security, identity management, and threat intelligence technologies. Identifies security paradigm shifts and approaches that provide genuine protection rather than security theater.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3500,
+				quantity: 40000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -402,6 +602,13 @@ const botsWithCompanies = [
 			total_shares: 6900000,
 			description:
 				"A materials-focused investment firm specializing in metals, ceramics, polymers, composites, and nanomaterials innovations. Identifies materials technologies that enable performance improvements across multiple industrial sectors from aerospace to consumer products.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2800,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -417,6 +624,13 @@ const botsWithCompanies = [
 			total_shares: 5200000,
 			description:
 				"A construction technology investment firm specializing in building materials, construction methods, project management systems, and property technologies. Identifies innovations that reduce construction time, cost, and environmental impact while improving building performance.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2500,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -432,6 +646,13 @@ const botsWithCompanies = [
 			total_shares: 4800000,
 			description:
 				"A hospitality investment firm specializing in hotels, restaurants, attractions, and travel services across market segments. Identifies concepts that create memorable guest experiences while maintaining operational excellence and strong financial performance.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3300,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -447,6 +668,13 @@ const botsWithCompanies = [
 			total_shares: 7500000,
 			description:
 				"An education investment firm specializing in K-12, higher education, corporate training, and lifelong learning technologies. Identifies approaches that improve learning outcomes while scaling effectively across diverse educational contexts.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2900,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -462,6 +690,13 @@ const botsWithCompanies = [
 			total_shares: 6300000,
 			description:
 				"A manufacturing technology investment firm specializing in process innovations, automation systems, supply chain solutions, and industrial IoT applications. Identifies approaches that improve productivity, quality, and adaptability in real factory environments.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3400,
+				quantity: 40000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -477,6 +712,13 @@ const botsWithCompanies = [
 			total_shares: 9000000,
 			description:
 				"A venture capital firm specializing in growth-stage companies with sustainable unit economics and scalable business models. Known for identifying businesses with genuine network effects and long-term value creation potential.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3700,
+				quantity: 50000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -492,6 +734,13 @@ const botsWithCompanies = [
 			total_shares: 7000000,
 			description:
 				"A quantitative investment firm that uses statistical methods, machine learning, and alternative data analysis to identify market inefficiencies. Specializes in strategies with low correlation to major indices and resilience during market volatility.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3000,
+				quantity: 35000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -507,6 +756,13 @@ const botsWithCompanies = [
 			total_shares: 4000000,
 			description:
 				"A private equity firm focused on acquiring traditional businesses with optimization potential through technology integration and operational improvements. Known for achieving significant margin enhancements and growth acceleration in portfolio companies.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 4000,
+				quantity: 25000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -522,6 +778,13 @@ const botsWithCompanies = [
 			total_shares: 5000000,
 			description:
 				"A fixed income investment firm specializing in sovereign debt, credit markets, and interest rate strategies. Applies comprehensive frameworks for evaluating bond investments across varying economic conditions, credit cycles, and liquidity environments.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3200,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -537,6 +800,13 @@ const botsWithCompanies = [
 			total_shares: 6500000,
 			description:
 				"An investment firm specializing in emerging and frontier markets across Asia, Africa, and Latin America. Focuses on identifying countries at economic inflection points through analysis of political stability, institutional development, and reform trajectories.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2700,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -552,6 +822,13 @@ const botsWithCompanies = [
 			total_shares: 3500000,
 			description:
 				"A research and investment firm focused on identifying overlooked small-cap companies with strong competitive positions, solid cash flow generation, and aligned management incentives. Known for extensive primary research in niche industries with limited analyst coverage.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 2300,
+				quantity: 25000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -567,6 +844,13 @@ const botsWithCompanies = [
 			total_shares: 4200000,
 			description:
 				"A proprietary trading and education firm specializing in short-term market inefficiencies and tactical opportunities. Utilizes frameworks for analyzing market microstructure, order flow, sentiment extremes, and technical setups to identify high-probability trading situations.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3600,
+				quantity: 40000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -582,6 +866,13 @@ const botsWithCompanies = [
 			total_shares: 4800000,
 			description:
 				"An investment firm specializing in insurance companies, reinsurance operations, and insurance-linked securities. Uses actuarial expertise to identify mispriced risks and companies trading at discounts to intrinsic value due to temporary setbacks or misunderstood business models.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3300,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -597,6 +888,13 @@ const botsWithCompanies = [
 			total_shares: 8500000,
 			description:
 				"A healthcare investment firm led by medical professionals that specializes in evaluating pharmaceutical pipelines, medical technologies, and healthcare delivery models. Uses clinical expertise to identify companies developing genuinely differentiated therapies and products.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 4000,
+				quantity: 25000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -612,6 +910,13 @@ const botsWithCompanies = [
 			total_shares: 7200000,
 			description:
 				"An investment firm specializing in essential infrastructure assets including transportation networks, energy transmission, water systems, and digital infrastructure. Focuses on assets with inflation-protected cash flows, high barriers to entry, and operational improvement potential.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3500,
+				quantity: 40000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -627,6 +932,13 @@ const botsWithCompanies = [
 			total_shares: 5500000,
 			description:
 				"A packaging innovation investment firm specializing in materials, manufacturing processes, functional design, and sustainability metrics. Identifies approaches that improve functionality and consumer appeal while reducing environmental impact.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3400,
+				quantity: 30000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -642,6 +954,13 @@ const botsWithCompanies = [
 			total_shares: 8200000,
 			description:
 				"A quantum technology investment firm specializing in quantum computing, sensing, communications, and materials. Evaluates innovations with scientific depth and commercial focus on distinguishing viable near-term applications from more distant possibilities.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 4000,
+				quantity: 25000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -657,6 +976,13 @@ const botsWithCompanies = [
 			total_shares: 7600000,
 			description:
 				"A nanotechnology investment firm specializing in nanomaterials, nanoelectronics, nanomedicine, and nanofabrication processes. Identifies technologies that can deliver meaningful performance improvements in real-world products and processes.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 3800,
+				quantity: 25000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 	{
@@ -672,6 +998,13 @@ const botsWithCompanies = [
 			total_shares: 9800000,
 			description:
 				"A space industry investment firm specializing in launch systems, satellite technologies, space resources, and orbital services. Identifies opportunities with viable near-term business models while supporting long-term vision for space development.",
+			ipo_order: {
+				is_buy: false,
+				price_in_cents: 4000,
+				quantity: 25000,
+				order_type: "limit",
+				status: "active",
+			},
 		},
 	},
 ];

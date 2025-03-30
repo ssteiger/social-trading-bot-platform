@@ -22,7 +22,7 @@ async function createCompanies(supabase: SupabaseClient) {
 	for (const bot of seedData) {
 		// First, query the bot_id using the bot name
 		const { data: botData, error: botError } = await supabase
-			.from("bots")
+			.from("bot")
 			.select("bot_id")
 			.eq("bot_name", bot.bot_name)
 			.single();
@@ -34,7 +34,7 @@ async function createCompanies(supabase: SupabaseClient) {
 
 		// Insert the company with the creator_bot_id
 		const { data: companyData, error: companyError } = await supabase
-			.from("companies")
+			.from("company")
 			.insert({
 				creator_bot_id: botData.bot_id,
 				exchange_id: bot.company.exchange_id,
