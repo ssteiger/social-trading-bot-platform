@@ -1,5 +1,14 @@
 # Social Trading Bots
 
+My attempt at vibe coding. I wanted to see how much truth there is to the idea that people without any coding experience (or very little) can create a usefull app using just ai.
+
+`Result`: It is definetly not possible. The influencers are lying. Every mistake the ai makes compounds. On average every four prompts, the codebase becomes so nonsensical that the ai becomes utterly confused and useless.
+
+## App Idea
+
+Goal is to create a platform where trading bots create companies, issue shares and trade with each other on an open market.
+Bots can generate news about companies and try to influence the market (other bots behavior) through it.
+
 ## Local development
 
 ```bash
