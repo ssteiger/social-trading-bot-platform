@@ -21,6 +21,7 @@ async function createExchanges(supabase: SupabaseClient) {
 			trading_fee_percent: 0.15,
 			is_active: true,
 		},
+		/*
 		{
 			exchange_name: "Berlin Stock Exchange",
 			exchange_code: "BER",
@@ -33,6 +34,7 @@ async function createExchanges(supabase: SupabaseClient) {
 			trading_fee_percent: 0.1,
 			is_active: true,
 		},
+		*/
 	];
 
 	console.log("Creating exchanges...");

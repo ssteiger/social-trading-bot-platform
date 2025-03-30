@@ -4,6 +4,64 @@
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.bots": {
+      "name": "bots",
+      "schema": "",
+      "columns": {
+        "bot_id": {
+          "name": "bot_id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "bot_name": {
+          "name": "bot_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_active_at": {
+          "name": "last_active_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "background_story": {
+          "name": "background_story",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bot_character_description": {
+          "name": "bot_character_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "money_balance_in_cents": {
+          "name": "money_balance_in_cents",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1000000000
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
     "public.companies": {
       "name": "companies",
       "schema": "",
@@ -41,12 +99,6 @@
         "total_shares": {
           "name": "total_shares",
           "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "initial_price": {
-          "name": "initial_price",
-          "type": "numeric(20, 2)",
           "primaryKey": false,
           "notNull": true
         },
@@ -199,9 +251,9 @@
           "notNull": true,
           "default": 0
         },
-        "average_purchase_price": {
-          "name": "average_purchase_price",
-          "type": "numeric(20, 2)",
+        "average_purchase_price_in_cents": {
+          "name": "average_purchase_price_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": false
         },
@@ -310,9 +362,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "price": {
-          "name": "price",
-          "type": "numeric(20, 2)",
+        "price_in_cents": {
+          "name": "price_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
@@ -328,6 +380,16 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "quantity_open": {
+          "name": "quantity_open",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "(quantity - quantity_filled)",
+            "type": "stored"
+          }
         },
         "status_id": {
           "name": "status_id",
@@ -594,9 +656,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "price": {
-          "name": "price",
-          "type": "numeric(20, 2)",
+        "price_in_cents": {
+          "name": "price_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
@@ -606,9 +668,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "trade_fee": {
-          "name": "trade_fee",
-          "type": "numeric(20, 2)",
+        "trade_fee_in_cents": {
+          "name": "trade_fee_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
@@ -768,27 +830,27 @@
           "primaryKey": false,
           "notNull": true
         },
-        "open_price": {
-          "name": "open_price",
-          "type": "numeric(20, 2)",
+        "open_price_in_cents": {
+          "name": "open_price_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
-        "close_price": {
-          "name": "close_price",
-          "type": "numeric(20, 2)",
+        "close_price_in_cents": {
+          "name": "close_price_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
-        "high_price": {
-          "name": "high_price",
-          "type": "numeric(20, 2)",
+        "high_price_in_cents": {
+          "name": "high_price_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
-        "low_price": {
-          "name": "low_price",
-          "type": "numeric(20, 2)",
+        "low_price_in_cents": {
+          "name": "low_price_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
@@ -881,57 +943,6 @@
       "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
-    },
-    "public.bots": {
-      "name": "bots",
-      "schema": "",
-      "columns": {
-        "bot_id": {
-          "name": "bot_id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "bot_name": {
-          "name": "bot_name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "last_active_at": {
-          "name": "last_active_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "background_story": {
-          "name": "background_story",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bot_character_description": {
-          "name": "bot_character_description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {},
-      "policies": {},
-      "isRLSEnabled": false
     }
   },
   "enums": {},
@@ -968,9 +979,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "current_price": {
-          "name": "current_price",
-          "type": "numeric(20, 2)",
+        "current_price_in_cents": {
+          "name": "current_price_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": false
         },
@@ -982,7 +993,7 @@
         }
       },
       "isExisting": false,
-      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, t.price AS current_price, t.executed_at AS last_trade_time FROM companies c JOIN exchanges e ON c.exchange_id = e.exchange_id LEFT JOIN trades t ON c.company_id = t.company_id WHERE t.executed_at = (( SELECT max(trades.executed_at) AS max FROM trades WHERE trades.company_id = c.company_id))",
+      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, t.price_in_cents AS current_price_in_cents, t.executed_at AS last_trade_time FROM companies c JOIN exchanges e ON c.exchange_id = e.exchange_id LEFT JOIN trades t ON c.company_id = t.company_id WHERE t.executed_at = (( SELECT max(trades.executed_at) AS max FROM trades WHERE trades.company_id = c.company_id))",
       "materialized": false
     },
     "public.order_book": {
@@ -1019,9 +1030,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "price": {
-          "name": "price",
-          "type": "numeric(20, 2)",
+        "price_in_cents": {
+          "name": "price_in_cents",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": false
         },
@@ -1039,7 +1050,7 @@
         }
       },
       "isExisting": false,
-      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM orders o JOIN companies c ON o.company_id = c.company_id JOIN exchanges e ON c.exchange_id = e.exchange_id WHERE o.status_id = (( SELECT order_statuses.status_id FROM order_statuses WHERE order_statuses.status_name::text = 'active'::text)) GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price ORDER BY c.company_id, o.is_buy DESC, o.price DESC",
+      "definition": "SELECT c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents, sum(o.quantity - o.quantity_filled) AS total_quantity, min(o.created_at) AS oldest_order_time FROM orders o JOIN companies c ON o.company_id = c.company_id JOIN exchanges e ON c.exchange_id = e.exchange_id WHERE o.status_id = (( SELECT order_statuses.status_id FROM order_statuses WHERE order_statuses.status_name::text = 'active'::text)) GROUP BY c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents ORDER BY c.company_id, o.is_buy DESC, o.price_in_cents DESC",
       "materialized": false
     }
   },

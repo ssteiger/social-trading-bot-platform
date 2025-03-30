@@ -1,6 +1,8 @@
-import { BotsManager } from "./bots-logic";
+import { TradingStrategy } from "./bots-logic/TradingStrategy";
+import { BotsManager } from "./bots-logic/botsManager";
 import { seedDataToDatabase } from "./seed-scripts";
 import { startBots } from "./startBots";
+import { startSimpleBots } from "./startSimpleBots";
 import { createSupabaseClient } from "./utils/supabase";
 
 async function startServer() {
@@ -31,7 +33,8 @@ async function startServer() {
 		await seedDataToDatabase(supabase);
 
 		// Start trading bots
-		await startBots(supabase);
+		//await startBots(supabase);
+		await startSimpleBots(supabase);
 
 		const bots = await botsManager.getAllBots();
 
@@ -46,6 +49,25 @@ async function startServer() {
 			}
 			process.exit(0);
 		});
+
+		// Log trading activity summary every minute
+		setInterval(async () => {
+			try {
+				const { data: trades, error } = await supabase
+					.from("trades")
+					.select("count(*)")
+					.gte("executed_at", new Date(Date.now() - 100).toISOString());
+
+				if (!error && trades) {
+					console.log({ trades });
+					console.log(
+						`Trading activity in the last minute: ${trades[0]?.count || 0} trades`,
+					);
+				}
+			} catch (error) {
+				console.error("Error getting trading activity:", error);
+			}
+		}, 100);
 	} catch (error) {
 		console.error("Error starting bots server:", error);
 		process.exit(1);

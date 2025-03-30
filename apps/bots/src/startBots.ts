@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { BotsManager } from "./bots-logic";
+import { BotFactory, type TradingStrategy } from "./bots-logic/TradingStrategy";
+import { BotsManager } from "./bots-logic/botsManager";
 import type { Database } from "./types/supabase";
 
 async function startBots(supabase: SupabaseClient<Database>) {
@@ -18,18 +19,31 @@ async function startBots(supabase: SupabaseClient<Database>) {
 
 	console.log(`Found ${bots.length} bots. Starting trading operations...`);
 
-	// Start each bot with different intervals to avoid concurrent operations
-	bots.forEach((bot, index) => {
-		// Stagger bot starting times slightly
-		const interval = 5000 + index * 1000;
+	// Assign different strategies to bots based on their character
+	for (const bot of bots) {
+		let strategy: TradingStrategy;
 
-		console.log(
-			`Starting bot ${bot.bot_name} (ID: ${bot.bot_id}) with interval ${interval}ms`,
-		);
+		// Assign strategies based on bot name/character
+		if (bot.bot_name.includes("Dividend")) {
+			strategy = BotFactory.createBot("dividend", botsManager);
+			console.log(`Assigned Dividend strategy to ${bot.bot_name}`);
+		} else if (bot.bot_name.includes("Phoenix")) {
+			strategy = BotFactory.createBot("meanreversion", botsManager);
+			console.log(`Assigned Mean Reversion strategy to ${bot.bot_name}`);
+		} else if (bot.bot_name.includes("Master")) {
+			strategy = BotFactory.createBot("momentum", botsManager);
+			console.log(`Assigned Momentum strategy to ${bot.bot_name}`);
+		} else {
+			strategy = BotFactory.createBot("random", botsManager);
+			console.log(`Assigned Random strategy to ${bot.bot_name}`);
+		}
 
-		// Start the trading bot
-		botsManager.startTradingBot(bot.bot_id, interval);
-	});
+		// Start the bot with its strategy
+		botsManager.startTradingBot({
+			botId: bot.bot_id,
+			strategyExecutionIntevalMs: 1000,
+		}); // Check every 1 second
+	}
 
 	console.log("All bots have been started!");
 }

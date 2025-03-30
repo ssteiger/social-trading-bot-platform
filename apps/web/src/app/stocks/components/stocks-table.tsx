@@ -10,8 +10,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import {
-	ColumnDef,
-	SortingState,
+	type ColumnDef,
+	type SortingState,
 	flexRender,
 	getCoreRowModel,
 	getPaginationRowModel,
@@ -33,7 +33,6 @@ interface Company {
 	company_name: string;
 	ticker_symbol: string;
 	total_shares: number;
-	initial_price: number;
 	created_at: string;
 	exchanges: {
 		exchange_name: string;
@@ -89,19 +88,6 @@ export function StocksTable({ data }: { data: Company[] }) {
 			accessorKey: "exchanges.exchange_code",
 			header: "Exchange",
 			cell: ({ row }) => <div>{row.original.exchanges.exchange_code}</div>,
-		},
-		{
-			accessorKey: "initial_price",
-			header: ({ column }) => (
-				<Button
-					variant="ghost"
-					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-				>
-					Initial Price
-					<ArrowUpDown className="ml-2 h-4 w-4" />
-				</Button>
-			),
-			cell: ({ row }) => <div>${row.original.initial_price.toFixed(2)}</div>,
 		},
 		{
 			accessorKey: "total_shares",

@@ -2,11 +2,17 @@
 CREATE TABLE bots (
     bot_id SERIAL PRIMARY KEY,
     bot_name VARCHAR(100) NOT NULL,
-    api_key VARCHAR(255) UNIQUE NOT NULL,
-    balance DECIMAL(20, 2) NOT NULL DEFAULT 10000.00,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    last_active_at TIMESTAMP NOT NULL DEFAULT NOW()
+    last_active_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    background_story TEXT,
+    bot_character_description TEXT,
+    money_balance_in_cents BIGINT NOT NULL DEFAULT 1000000000 -- Default 10 million dollars (1 billion cents)
 );
+
+-- Add comment explaining the purpose of these fields
+COMMENT ON COLUMN bots.background_story IS 'Detailed backstory for the trading bot character';
+COMMENT ON COLUMN bots.bot_character_description IS 'Brief description of the bots character traits and trading style';
+COMMENT ON COLUMN bots.money_balance_in_cents IS 'The bot''s available cash balance in cents for trading';
 
 -- Create table for stock exchanges
 CREATE TABLE exchanges (
@@ -26,7 +32,6 @@ CREATE TABLE companies (
     company_name VARCHAR(100) NOT NULL,
     ticker_symbol VARCHAR(10) NOT NULL,
     total_shares BIGINT NOT NULL,
-    initial_price DECIMAL(20, 2) NOT NULL,
     description TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(exchange_id, ticker_symbol)
@@ -38,7 +43,7 @@ CREATE TABLE shareholdings (
     bot_id INTEGER NOT NULL REFERENCES bots(bot_id),
     company_id INTEGER NOT NULL REFERENCES companies(company_id),
     shares BIGINT NOT NULL DEFAULT 0,
-    average_purchase_price DECIMAL(20, 2),
+    average_purchase_price_in_cents BIGINT,
     last_updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(bot_id, company_id)
 );
@@ -79,9 +84,10 @@ CREATE TABLE orders (
     company_id INTEGER NOT NULL REFERENCES companies(company_id),
     order_type_id INTEGER NOT NULL REFERENCES order_types(order_type_id),
     is_buy BOOLEAN NOT NULL,
-    price DECIMAL(20, 2) NOT NULL,
+    price_in_cents BIGINT NOT NULL,
     quantity BIGINT NOT NULL,
     quantity_filled BIGINT NOT NULL DEFAULT 0,
+    quantity_open BIGINT GENERATED ALWAYS AS (quantity - quantity_filled) STORED,
     status_id INTEGER NOT NULL REFERENCES order_statuses(status_id),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMP,
@@ -97,9 +103,9 @@ CREATE TABLE trades (
     sell_order_id INTEGER NOT NULL REFERENCES orders(order_id),
     buyer_bot_id INTEGER NOT NULL REFERENCES bots(bot_id),
     seller_bot_id INTEGER NOT NULL REFERENCES bots(bot_id),
-    price DECIMAL(20, 2) NOT NULL,
+    price_in_cents BIGINT NOT NULL,
     quantity BIGINT NOT NULL,
-    trade_fee DECIMAL(20, 2) NOT NULL,
+    trade_fee_in_cents BIGINT NOT NULL,
     executed_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -108,10 +114,10 @@ CREATE TABLE price_history (
     history_id SERIAL PRIMARY KEY,
     company_id INTEGER NOT NULL REFERENCES companies(company_id),
     exchange_id INTEGER NOT NULL REFERENCES exchanges(exchange_id),
-    open_price DECIMAL(20, 2) NOT NULL,
-    close_price DECIMAL(20, 2) NOT NULL,
-    high_price DECIMAL(20, 2) NOT NULL,
-    low_price DECIMAL(20, 2) NOT NULL,
+    open_price_in_cents BIGINT NOT NULL,
+    close_price_in_cents BIGINT NOT NULL,
+    high_price_in_cents BIGINT NOT NULL,
+    low_price_in_cents BIGINT NOT NULL,
     volume BIGINT NOT NULL,
     timestamp TIMESTAMP NOT NULL,
     period_length VARCHAR(20) NOT NULL,  -- '1min', '5min', '1hour', '1day', etc.
@@ -134,7 +140,7 @@ SELECT
     c.ticker_symbol,
     c.exchange_id,
     e.exchange_code,
-    t.price as current_price,
+    t.price_in_cents as current_price_in_cents,
     t.executed_at as last_trade_time
 FROM 
     companies c
@@ -157,7 +163,7 @@ SELECT
     c.exchange_id,
     e.exchange_code,
     o.is_buy,
-    o.price,
+    o.price_in_cents,
     SUM(o.quantity - o.quantity_filled) as total_quantity,
     MIN(o.created_at) as oldest_order_time
 FROM 
@@ -169,21 +175,21 @@ JOIN
 WHERE 
     o.status_id = (SELECT status_id FROM order_statuses WHERE status_name = 'active')
 GROUP BY 
-    c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price
+    c.company_id, c.ticker_symbol, c.exchange_id, e.exchange_code, o.is_buy, o.price_in_cents
 ORDER BY 
-    c.company_id, o.is_buy DESC, o.price DESC;
+    c.company_id, o.is_buy DESC, o.price_in_cents DESC;
 
 -- Create a function to match orders
 CREATE OR REPLACE FUNCTION match_orders() RETURNS TRIGGER AS $$
 DECLARE
     matching_order RECORD;
     trade_quantity BIGINT;
-    trade_price DECIMAL(20, 2);
+    trade_price_in_cents BIGINT;
     active_status_id INTEGER;
     filled_status_id INTEGER;
     partially_filled_status_id INTEGER;
     exchange_record RECORD;
-    trade_fee DECIMAL(20, 2);
+    trade_fee_in_cents BIGINT;
 BEGIN
     -- Get status IDs
     SELECT status_id INTO active_status_id FROM order_statuses WHERE status_name = 'active';
@@ -214,26 +220,26 @@ BEGIN
             SELECT * FROM orders
             WHERE company_id = NEW.company_id
               AND is_buy = FALSE
-              AND price <= NEW.price
+              AND price_in_cents <= NEW.price_in_cents
               AND status_id = active_status_id
               AND bot_id <> NEW.bot_id
               AND (quantity - quantity_filled) > 0
-            ORDER BY price ASC, created_at ASC
+            ORDER BY price_in_cents ASC, created_at ASC
         LOOP
             -- Determine quantity and price for this match
             trade_quantity := LEAST(NEW.quantity - NEW.quantity_filled, matching_order.quantity - matching_order.quantity_filled);
-            trade_price := matching_order.price; -- Use the price from the existing order
+            trade_price_in_cents := matching_order.price_in_cents; -- Use the price from the existing order
             
             -- Calculate the trading fee
-            trade_fee := trade_price * trade_quantity * (exchange_record.trading_fee_percent / 100.0);
+            trade_fee_in_cents := (trade_price_in_cents * trade_quantity * exchange_record.trading_fee_percent) / 100;
             
             -- Create a trade record
             INSERT INTO trades (
                 exchange_id, company_id, buy_order_id, sell_order_id, 
-                buyer_bot_id, seller_bot_id, price, quantity, trade_fee
+                buyer_bot_id, seller_bot_id, price_in_cents, quantity, trade_fee_in_cents
             ) VALUES (
                 exchange_record.exchange_id, NEW.company_id, NEW.order_id, matching_order.order_id,
-                NEW.bot_id, matching_order.bot_id, trade_price, trade_quantity, trade_fee
+                NEW.bot_id, matching_order.bot_id, trade_price_in_cents, trade_quantity, trade_fee_in_cents
             );
             
             -- Update the matched order
@@ -249,26 +255,33 @@ BEGIN
             -- Update the current order
             NEW.quantity_filled := NEW.quantity_filled + trade_quantity;
             
-            -- Update bot balances
-            -- Buyer pays: trade_price * trade_quantity + trade_fee
-            -- Seller receives: trade_price * trade_quantity - trade_fee
+            -- Update bot last active time
             UPDATE bots
-            SET balance = balance - (trade_price * trade_quantity) - trade_fee,
-                last_active_at = NOW()
+            SET last_active_at = NOW()
             WHERE bot_id = NEW.bot_id;
             
             UPDATE bots
-            SET balance = balance + (trade_price * trade_quantity) - trade_fee,
-                last_active_at = NOW()
+            SET last_active_at = NOW()
+            WHERE bot_id = matching_order.bot_id;
+            
+            -- Update bot money balances
+            -- Deduct money from buyer (including fee)
+            UPDATE bots
+            SET money_balance_in_cents = money_balance_in_cents - (trade_price_in_cents * trade_quantity) - trade_fee_in_cents
+            WHERE bot_id = NEW.bot_id;
+            
+            -- Add money to seller (minus fee)
+            UPDATE bots
+            SET money_balance_in_cents = money_balance_in_cents + (trade_price_in_cents * trade_quantity) - trade_fee_in_cents
             WHERE bot_id = matching_order.bot_id;
             
             -- Update shareholdings
             -- Add shares to buyer's holding
-            INSERT INTO shareholdings (bot_id, company_id, shares, average_purchase_price)
-            VALUES (NEW.bot_id, NEW.company_id, trade_quantity, trade_price)
+            INSERT INTO shareholdings (bot_id, company_id, shares, average_purchase_price_in_cents)
+            VALUES (NEW.bot_id, NEW.company_id, trade_quantity, trade_price_in_cents)
             ON CONFLICT (bot_id, company_id) DO UPDATE
             SET shares = shareholdings.shares + trade_quantity,
-                average_purchase_price = (shareholdings.average_purchase_price * shareholdings.shares + trade_price * trade_quantity) / (shareholdings.shares + trade_quantity),
+                average_purchase_price_in_cents = (shareholdings.average_purchase_price_in_cents * shareholdings.shares + trade_price_in_cents * trade_quantity) / (shareholdings.shares + trade_quantity),
                 last_updated_at = NOW();
             
             -- Reduce shares from seller's holding
@@ -288,26 +301,26 @@ BEGIN
             SELECT * FROM orders
             WHERE company_id = NEW.company_id
               AND is_buy = TRUE
-              AND price >= NEW.price
+              AND price_in_cents >= NEW.price_in_cents
               AND status_id = active_status_id
               AND bot_id <> NEW.bot_id
               AND (quantity - quantity_filled) > 0
-            ORDER BY price DESC, created_at ASC
+            ORDER BY price_in_cents DESC, created_at ASC
         LOOP
             -- Determine quantity and price for this match
             trade_quantity := LEAST(NEW.quantity - NEW.quantity_filled, matching_order.quantity - matching_order.quantity_filled);
-            trade_price := matching_order.price; -- Use the price from the existing order
+            trade_price_in_cents := matching_order.price_in_cents; -- Use the price from the existing order
             
             -- Calculate the trading fee
-            trade_fee := trade_price * trade_quantity * (exchange_record.trading_fee_percent / 100.0);
+            trade_fee_in_cents := (trade_price_in_cents * trade_quantity * exchange_record.trading_fee_percent) / 100;
             
             -- Create a trade record
             INSERT INTO trades (
                 exchange_id, company_id, buy_order_id, sell_order_id, 
-                buyer_bot_id, seller_bot_id, price, quantity, trade_fee
+                buyer_bot_id, seller_bot_id, price_in_cents, quantity, trade_fee_in_cents
             ) VALUES (
                 exchange_record.exchange_id, NEW.company_id, matching_order.order_id, NEW.order_id,
-                matching_order.bot_id, NEW.bot_id, trade_price, trade_quantity, trade_fee
+                matching_order.bot_id, NEW.bot_id, trade_price_in_cents, trade_quantity, trade_fee_in_cents
             );
             
             -- Update the matched order
@@ -323,26 +336,33 @@ BEGIN
             -- Update the current order
             NEW.quantity_filled := NEW.quantity_filled + trade_quantity;
             
-            -- Update bot balances
-            -- Buyer pays: trade_price * trade_quantity + trade_fee
-            -- Seller receives: trade_price * trade_quantity - trade_fee
+            -- Update bot last active time
             UPDATE bots
-            SET balance = balance - (trade_price * trade_quantity) - trade_fee,
-                last_active_at = NOW()
+            SET last_active_at = NOW()
             WHERE bot_id = matching_order.bot_id;
             
             UPDATE bots
-            SET balance = balance + (trade_price * trade_quantity) - trade_fee,
-                last_active_at = NOW()
+            SET last_active_at = NOW()
             WHERE bot_id = NEW.bot_id;
+            
+            -- Update bot money balances
+            -- Add money to seller (minus fee)
+            UPDATE bots
+            SET money_balance_in_cents = money_balance_in_cents + (trade_price_in_cents * trade_quantity) - trade_fee_in_cents
+            WHERE bot_id = NEW.bot_id;
+            
+            -- Deduct money from buyer (including fee)
+            UPDATE bots
+            SET money_balance_in_cents = money_balance_in_cents - (trade_price_in_cents * trade_quantity) - trade_fee_in_cents
+            WHERE bot_id = matching_order.bot_id;
             
             -- Update shareholdings
             -- Add shares to buyer's holding
-            INSERT INTO shareholdings (bot_id, company_id, shares, average_purchase_price)
-            VALUES (matching_order.bot_id, NEW.company_id, trade_quantity, trade_price)
+            INSERT INTO shareholdings (bot_id, company_id, shares, average_purchase_price_in_cents)
+            VALUES (matching_order.bot_id, NEW.company_id, trade_quantity, trade_price_in_cents)
             ON CONFLICT (bot_id, company_id) DO UPDATE
             SET shares = shareholdings.shares + trade_quantity,
-                average_purchase_price = (shareholdings.average_purchase_price * shareholdings.shares + trade_price * trade_quantity) / (shareholdings.shares + trade_quantity),
+                average_purchase_price_in_cents = (shareholdings.average_purchase_price_in_cents * shareholdings.shares + trade_price_in_cents * trade_quantity) / (shareholdings.shares + trade_quantity),
                 last_updated_at = NOW();
             
             -- Reduce shares from seller's holding
@@ -378,10 +398,10 @@ FOR EACH ROW
 EXECUTE FUNCTION match_orders();
 
 CREATE TRIGGER match_orders_on_update
-AFTER UPDATE OF status_id, price, quantity ON orders
+AFTER UPDATE OF status_id, price_in_cents, quantity ON orders
 FOR EACH ROW
 WHEN (OLD.status_id IS DISTINCT FROM NEW.status_id OR 
-      OLD.price IS DISTINCT FROM NEW.price OR 
+      OLD.price_in_cents IS DISTINCT FROM NEW.price_in_cents OR 
       OLD.quantity IS DISTINCT FROM NEW.quantity)
 EXECUTE FUNCTION match_orders();
 
@@ -390,9 +410,9 @@ CREATE OR REPLACE FUNCTION update_price_history() RETURNS TRIGGER AS $$
 DECLARE
     current_period TIMESTAMP;
     period_exists BOOLEAN;
-    high_price DECIMAL(20, 2);
-    low_price DECIMAL(20, 2);
-    open_price DECIMAL(20, 2);
+    high_price_in_cents BIGINT;
+    low_price_in_cents BIGINT;
+    open_price_in_cents BIGINT;
     volume BIGINT;
 BEGIN
     -- Round the timestamp to the nearest minute for 1-minute candles
@@ -409,8 +429,8 @@ BEGIN
     IF period_exists THEN
         -- Update existing record
         -- Get current high and low
-        SELECT ph.high_price, ph.low_price, ph.open_price, ph.volume
-        INTO high_price, low_price, open_price, volume
+        SELECT ph.high_price_in_cents, ph.low_price_in_cents, ph.open_price_in_cents, ph.volume
+        INTO high_price_in_cents, low_price_in_cents, open_price_in_cents, volume
         FROM price_history ph
         WHERE company_id = NEW.company_id
         AND timestamp = current_period
@@ -418,9 +438,9 @@ BEGIN
         
         -- Update record
         UPDATE price_history
-        SET close_price = NEW.price,
-            high_price = GREATEST(high_price, NEW.price),
-            low_price = LEAST(low_price, NEW.price),
+        SET close_price_in_cents = NEW.price_in_cents,
+            high_price_in_cents = GREATEST(high_price_in_cents, NEW.price_in_cents),
+            low_price_in_cents = LEAST(low_price_in_cents, NEW.price_in_cents),
             volume = volume + NEW.quantity
         WHERE company_id = NEW.company_id
         AND timestamp = current_period
@@ -428,11 +448,11 @@ BEGIN
     ELSE
         -- Create a new record
         INSERT INTO price_history (
-            company_id, exchange_id, open_price, close_price, 
-            high_price, low_price, volume, timestamp, period_length
+            company_id, exchange_id, open_price_in_cents, close_price_in_cents, 
+            high_price_in_cents, low_price_in_cents, volume, timestamp, period_length
         ) VALUES (
-            NEW.company_id, NEW.exchange_id, NEW.price, NEW.price,
-            NEW.price, NEW.price, NEW.quantity, current_period, '1min'
+            NEW.company_id, NEW.exchange_id, NEW.price_in_cents, NEW.price_in_cents,
+            NEW.price_in_cents, NEW.price_in_cents, NEW.quantity, current_period, '1min'
         );
     END IF;
     

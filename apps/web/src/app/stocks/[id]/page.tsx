@@ -105,8 +105,8 @@ export default function StockDetailPage({
 	// Get current price from most recent trade
 	const currentPrice =
 		tradeHistory && tradeHistory.length > 0
-			? tradeHistory[0].price
-			: stockData?.initial_price || 0;
+			? tradeHistory[0].price_in_cents
+			: null;
 
 	return (
 		<div className="flex-1 space-y-4 p-8 pt-6">

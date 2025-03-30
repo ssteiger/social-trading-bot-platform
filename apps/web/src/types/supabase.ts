@@ -42,6 +42,7 @@ export type Database = {
           bot_name: string
           created_at: string
           last_active_at: string
+          money_balance_in_cents: number
         }
         Insert: {
           background_story?: string | null
@@ -50,6 +51,7 @@ export type Database = {
           bot_name: string
           created_at?: string
           last_active_at?: string
+          money_balance_in_cents?: number
         }
         Update: {
           background_story?: string | null
@@ -58,6 +60,7 @@ export type Database = {
           bot_name?: string
           created_at?: string
           last_active_at?: string
+          money_balance_in_cents?: number
         }
         Relationships: []
       }
@@ -69,7 +72,6 @@ export type Database = {
           creator_bot_id: number
           description: string | null
           exchange_id: number
-          initial_price: number
           ticker_symbol: string
           total_shares: number
         }
@@ -80,7 +82,6 @@ export type Database = {
           creator_bot_id: number
           description?: string | null
           exchange_id: number
-          initial_price: number
           ticker_symbol: string
           total_shares: number
         }
@@ -91,7 +92,6 @@ export type Database = {
           creator_bot_id?: number
           description?: string | null
           exchange_id?: number
-          initial_price?: number
           ticker_symbol?: string
           total_shares?: number
         }
@@ -185,9 +185,10 @@ export type Database = {
           last_updated_at: string
           order_id: number
           order_type_id: number
-          price: number
+          price_in_cents: number
           quantity: number
           quantity_filled: number
+          quantity_open: number | null
           status_id: number
         }
         Insert: {
@@ -199,9 +200,10 @@ export type Database = {
           last_updated_at?: string
           order_id?: number
           order_type_id: number
-          price: number
+          price_in_cents: number
           quantity: number
           quantity_filled?: number
+          quantity_open?: number | null
           status_id: number
         }
         Update: {
@@ -213,9 +215,10 @@ export type Database = {
           last_updated_at?: string
           order_id?: number
           order_type_id?: number
-          price?: number
+          price_in_cents?: number
           quantity?: number
           quantity_filled?: number
+          quantity_open?: number | null
           status_id?: number
         }
         Relationships: [
@@ -265,37 +268,37 @@ export type Database = {
       }
       price_history: {
         Row: {
-          close_price: number
+          close_price_in_cents: number
           company_id: number
           exchange_id: number
-          high_price: number
+          high_price_in_cents: number
           history_id: number
-          low_price: number
-          open_price: number
+          low_price_in_cents: number
+          open_price_in_cents: number
           period_length: string
           timestamp: string
           volume: number
         }
         Insert: {
-          close_price: number
+          close_price_in_cents: number
           company_id: number
           exchange_id: number
-          high_price: number
+          high_price_in_cents: number
           history_id?: number
-          low_price: number
-          open_price: number
+          low_price_in_cents: number
+          open_price_in_cents: number
           period_length: string
           timestamp: string
           volume: number
         }
         Update: {
-          close_price?: number
+          close_price_in_cents?: number
           company_id?: number
           exchange_id?: number
-          high_price?: number
+          high_price_in_cents?: number
           history_id?: number
-          low_price?: number
-          open_price?: number
+          low_price_in_cents?: number
+          open_price_in_cents?: number
           period_length?: string
           timestamp?: string
           volume?: number
@@ -333,7 +336,7 @@ export type Database = {
       }
       shareholdings: {
         Row: {
-          average_purchase_price: number | null
+          average_purchase_price_in_cents: number | null
           bot_id: number
           company_id: number
           last_updated_at: string
@@ -341,7 +344,7 @@ export type Database = {
           shares: number
         }
         Insert: {
-          average_purchase_price?: number | null
+          average_purchase_price_in_cents?: number | null
           bot_id: number
           company_id: number
           last_updated_at?: string
@@ -349,7 +352,7 @@ export type Database = {
           shares?: number
         }
         Update: {
-          average_purchase_price?: number | null
+          average_purchase_price_in_cents?: number | null
           bot_id?: number
           company_id?: number
           last_updated_at?: string
@@ -394,11 +397,11 @@ export type Database = {
           company_id: number
           exchange_id: number
           executed_at: string
-          price: number
+          price_in_cents: number
           quantity: number
           sell_order_id: number
           seller_bot_id: number
-          trade_fee: number
+          trade_fee_in_cents: number
           trade_id: number
         }
         Insert: {
@@ -407,11 +410,11 @@ export type Database = {
           company_id: number
           exchange_id: number
           executed_at?: string
-          price: number
+          price_in_cents: number
           quantity: number
           sell_order_id: number
           seller_bot_id: number
-          trade_fee: number
+          trade_fee_in_cents: number
           trade_id?: number
         }
         Update: {
@@ -420,11 +423,11 @@ export type Database = {
           company_id?: number
           exchange_id?: number
           executed_at?: string
-          price?: number
+          price_in_cents?: number
           quantity?: number
           sell_order_id?: number
           seller_bot_id?: number
-          trade_fee?: number
+          trade_fee_in_cents?: number
           trade_id?: number
         }
         Relationships: [
@@ -491,7 +494,7 @@ export type Database = {
       current_market_prices: {
         Row: {
           company_id: number | null
-          current_price: number | null
+          current_price_in_cents: number | null
           exchange_code: string | null
           exchange_id: number | null
           last_trade_time: string | null
@@ -514,7 +517,7 @@ export type Database = {
           exchange_id: number | null
           is_buy: boolean | null
           oldest_order_time: string | null
-          price: number | null
+          price_in_cents: number | null
           ticker_symbol: string | null
           total_quantity: number | null
         }
@@ -530,7 +533,15 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      accept_order: {
+        Args: {
+          p_accepting_bot_id: number
+          p_order_id: number
+          p_quantity: number
+          p_trade_fee_in_cents: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

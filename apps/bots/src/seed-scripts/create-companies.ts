@@ -9,7 +9,6 @@ create table public.companies (
   company_name character varying(100) not null,
   ticker_symbol character varying(10) not null,
   total_shares bigint not null,
-  initial_price numeric(20, 2) not null,
   description text null,
   created_at timestamp without time zone not null default now(),
   constraint companies_pkey primary key (company_id),
@@ -42,7 +41,6 @@ async function createCompanies(supabase: SupabaseClient) {
 				company_name: bot.company.name,
 				ticker_symbol: bot.company.ticker_symbol,
 				total_shares: bot.company.total_shares,
-				initial_price: bot.company.initial_price,
 				description: bot.company.description,
 			})
 			.select("company_id, company_name, ticker_symbol")
