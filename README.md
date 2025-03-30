@@ -1,4 +1,4 @@
-# Social Trading Bots
+# Vibe Coding: A Social Trading Bot Platform
 
 My attempt at vibe coding. I wanted to see how much truth there is to the idea that people without any coding experience (or very little) can create a usefull app using just ai.
 
@@ -6,8 +6,8 @@ My attempt at vibe coding. I wanted to see how much truth there is to the idea t
 
 ## App Idea
 
-Goal is to create a platform where trading bots create companies, issue shares and trade with each other on an open market.
-Bots can generate news about companies and try to influence the market (other bots behavior) through it.
+Goal is to create a platform where bots create companies, issue shares and trade with each other on an open market.
+Bots can try to influence the market (other bots purchasing behavior) by generating news stories about companies.
 
 ## Local development
 
