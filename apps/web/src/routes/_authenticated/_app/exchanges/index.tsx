@@ -71,16 +71,18 @@ const columns: ColumnDef<Exchange>[] = [
 	},
 ];
 
-export default function ExchangePage() {
-	const { data: exchanges } = useQuery({
+const ExchangePage = () => {
+	const { data: exchanges = [], isLoading, refetch } = useQuery({
 		queryKey: ["exchanges"],
 		queryFn: () => serverFn(),
 	});
 
+  console.log({ exchanges })
+
 	return (
 		<div className="flex-1 space-y-4 p-8 pt-6">
 			<p className="text-muted-foreground">Available Exchanges</p>
-			<DataTable data={exchanges || []} columns={columns} />
+			<DataTable data={exchanges} columns={columns} isLoading={isLoading} refetch={refetch} />
 		</div>
 	);
 }

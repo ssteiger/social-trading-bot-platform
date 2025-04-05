@@ -131,8 +131,8 @@ const columns: ColumnDef<Order>[] = [
 	},
 ];
 
-export default function OrderBookPage() {
-  const { data: orders } = useQuery({
+const OrderBookPage = () => {
+  const { data: orders, isLoading, refetch } = useQuery({
 		queryKey: ["orders"],
 		queryFn: () => serverFn(),
 	});
@@ -239,6 +239,8 @@ export default function OrderBookPage() {
 			<DataTable
 				data={orders || []}
 				columns={columns}
+        isLoading={isLoading} 
+        refetch={refetch}
 				rowViewerContent={rowViewerContent}
 			/>
 		</div>

@@ -53,7 +53,7 @@ const columns: ColumnDef<Company>[] = [
 ];
 
 const CompanyPage = () => {
-	const { data: companies } = useQuery({
+	const { data: companies, isLoading, refetch } = useQuery({
 		queryKey: ["company"],
 		queryFn: () => serverFn(),
 	});
@@ -66,6 +66,8 @@ const CompanyPage = () => {
       <DataTable
         data={companies || []}
         columns={columns}
+        isLoading={isLoading} 
+        refetch={refetch}
         searchableColumns={["ticker_symbol", "company_name", "exchange_id"]}
       />
     </div>

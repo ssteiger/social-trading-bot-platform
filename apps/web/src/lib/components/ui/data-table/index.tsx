@@ -1,5 +1,3 @@
-
-
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
@@ -13,7 +11,6 @@ import {
 	useReactTable,
 } from "@tanstack/react-table";
 import {
-	ArrowUpDown,
 	ChevronDown,
 	ChevronLeft,
 	ChevronRight,
@@ -46,13 +43,7 @@ import {
 } from "~/lib/components/ui/select";
 import {
 	Sheet,
-	SheetClose,
 	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
 } from "~/lib/components/ui/sheet";
 import {
 	Table,
@@ -65,16 +56,20 @@ import {
 
 export interface DataTableProps<TData> {
 	data: TData[];
+	isLoading?: boolean;
+	refetch?: () => void;
 	columns: ColumnDef<TData>[];
 	showSelectColumn?: boolean;
 	searchableColumns?: Array<keyof TData & string>;
 	rowViewerContent?: React.ComponentType<{ item: TData }>;
 	pageSize?: number;
-	// Maybe add additional customization props later
+	resetOnDataChange?: boolean;
 }
 
 export function DataTable<TData>({
 	data,
+	isLoading,
+	refetch,
 	columns: userColumns,
 	showSelectColumn = false,
 	searchableColumns = [],
@@ -203,6 +198,9 @@ export function DataTable<TData>({
 		},
 	});
 
+  console.log({ data })
+  console.log({ table })
+
 	// Add state for the selected row
 	const [selectedRow, setSelectedRow] = React.useState<TData | null>(null);
 
@@ -243,32 +241,43 @@ export function DataTable<TData>({
 						</div>
 					</div>
 				)}
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="outline" className="ml-auto">
-							Columns <ChevronDown />
+				<div className="flex gap-2 ml-auto">
+					{refetch && (
+						<Button 
+							variant="outline" 
+							onClick={() => refetch()}
+							className="flex items-center gap-1"
+						>
+							Refresh
 						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						{table
-							.getAllColumns()
-							.filter((column) => column.getCanHide())
-							.map((column) => {
-								return (
-									<DropdownMenuCheckboxItem
-										key={column.id}
-										className="capitalize"
-										checked={column.getIsVisible()}
-										onCheckedChange={(value) =>
-											column.toggleVisibility(!!value)
-										}
-									>
-										{column.id}
-									</DropdownMenuCheckboxItem>
-								);
-							})}
-					</DropdownMenuContent>
-				</DropdownMenu>
+					)}
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="outline">
+								Columns <ChevronDown />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							{table
+								.getAllColumns()
+								.filter((column) => column.getCanHide())
+								.map((column) => {
+									return (
+										<DropdownMenuCheckboxItem
+											key={column.id}
+											className="capitalize"
+											checked={column.getIsVisible()}
+											onCheckedChange={(value) =>
+												column.toggleVisibility(!!value)
+											}
+										>
+											{column.id}
+										</DropdownMenuCheckboxItem>
+									);
+								})}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
 			</div>
 			<div className="overflow-hidden rounded-lg border">
 				<Table>
@@ -291,10 +300,19 @@ export function DataTable<TData>({
 						))}
 					</TableHeader>
 					<TableBody>
-						{table.getRowModel().rows?.length ? (
+						{isLoading ? (
+							<TableRow>
+								<TableCell
+									colSpan={allColumns.length}
+									className="h-24 text-center"
+								>
+									Loading...
+								</TableCell>
+							</TableRow>
+						) : table.getRowModel().rows?.length ? (
 							table.getRowModel().rows.map((row) => (
 								<TableRow
-									key={row.id}
+									key={`row-${row.id}`}
 									data-state={row.getIsSelected() && "selected"}
 									className={
 										CellViewerContent ? "cursor-pointer hover:bg-muted/50" : ""
@@ -306,7 +324,7 @@ export function DataTable<TData>({
 									}
 								>
 									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id}>
+										<TableCell key={`cell-${cell.id}`}>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext(),
@@ -415,23 +433,5 @@ export function DataTable<TData>({
 				</Sheet>
 			)}
 		</div>
-	);
-}
-
-interface RowDetailSheetProps<TData> {
-	item: TData;
-	content: React.ComponentType<{ item: TData }>;
-}
-
-function RowDetailSheet<TData>({
-	item,
-	content: Content,
-}: RowDetailSheetProps<TData>) {
-	return (
-		<Sheet>
-			<SheetContent side="right" className="flex flex-col">
-				<Content item={item} />
-			</SheetContent>
-		</Sheet>
 	);
 }

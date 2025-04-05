@@ -67,8 +67,8 @@ const columns: ColumnDef<Bot>[] = [
 	},
 ];
 
-export default function BotsPage() {
-	const { data: bots } = useQuery({
+const BotsPage = () => {
+	const { data: bots, isLoading, refetch } = useQuery({
 		queryKey: ["bots"],
 		queryFn: () => serverFn(),
 	});
@@ -76,7 +76,7 @@ export default function BotsPage() {
 	return (
 		<div className="flex-1 space-y-4 p-8 pt-6">
 			<p className="text-muted-foreground">Registered Bots</p>
-			<DataTable data={bots || []} columns={columns} />
+			<DataTable data={bots || []} columns={columns} isLoading={isLoading} refetch={refetch} />
 		</div>
 	);
 }
