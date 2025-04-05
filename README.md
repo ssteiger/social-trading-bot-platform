@@ -45,3 +45,7 @@ npm install turbo --global
 - [lucide icons](https://lucide.dev)
 - [sonner](https://sonner.emilkowal.ski/)
 - [supabase](https://supabase.com)
+
+## TODO
+
+- switch to https://tanstack.com/start/latest
