@@ -30,7 +30,7 @@ const serverFn = createServerFn({ method: "GET" })
 const columns: ColumnDef<Bot>[] = [
 	{
 		accessorKey: "bot_id",
-		header: "ID",
+		header: "Bot ID",
 	},
 	{
 		accessorKey: "bot_name",
@@ -74,7 +74,7 @@ const BotsPage = () => {
 	});
 
 	return (
-		<div className="flex-1 space-y-4 p-8 pt-6">
+		<div className="flex-1">
 			<p className="text-muted-foreground">Registered Bots</p>
 			<DataTable data={bots || []} columns={columns} isLoading={isLoading} refetch={refetch} />
 		</div>

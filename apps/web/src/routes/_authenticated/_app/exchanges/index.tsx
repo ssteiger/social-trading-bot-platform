@@ -80,7 +80,7 @@ const ExchangePage = () => {
   console.log({ exchanges })
 
 	return (
-		<div className="flex-1 space-y-4 p-8 pt-6">
+		<div className="flex-1">
 			<p className="text-muted-foreground">Available Exchanges</p>
 			<DataTable data={exchanges} columns={columns} isLoading={isLoading} refetch={refetch} />
 		</div>

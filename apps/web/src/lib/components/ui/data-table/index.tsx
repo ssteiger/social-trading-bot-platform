@@ -71,7 +71,7 @@ export function DataTable<TData>({
 	isLoading,
 	refetch,
 	columns: userColumns,
-	showSelectColumn = false,
+	showSelectColumn = true,
 	searchableColumns = [],
 	rowViewerContent: CellViewerContent,
 	pageSize = 50,
@@ -244,6 +244,7 @@ export function DataTable<TData>({
 				<div className="flex gap-2 ml-auto">
 					{refetch && (
 						<Button 
+							size="sm"
 							variant="outline" 
 							onClick={() => refetch()}
 							className="flex items-center gap-1"
@@ -253,7 +254,7 @@ export function DataTable<TData>({
 					)}
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="outline">
+							<Button size="sm" variant="outline">
 								Columns <ChevronDown />
 							</Button>
 						</DropdownMenuTrigger>
@@ -279,7 +280,7 @@ export function DataTable<TData>({
 					</DropdownMenu>
 				</div>
 			</div>
-			<div className="overflow-hidden rounded-lg border">
+			<div className="overflow-hidden">
 				<Table>
 					<TableHeader className="sticky top-0 z-10 bg-muted">
 						{table.getHeaderGroups().map((headerGroup) => (
