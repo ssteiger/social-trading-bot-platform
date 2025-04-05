@@ -8,33 +8,76 @@ import { Button } from "~/lib/components/ui/button";
 import { Input } from "~/lib/components/ui/input";
 import { Label } from "~/lib/components/ui/label";
 import { cn } from "~/lib/utils/cn";
-import { getSupabaseBrowserClient } from "~/lib/utils/supabase/client";
+import { getSupabaseServerClient } from "~/lib/utils/supabase/server";
+import { createServerFn } from "@tanstack/react-start";
 
 type UserAuthFormProps = React.HTMLAttributes<HTMLDivElement>;
 
+export const loginFn = createServerFn()
+  .validator((data: { email: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient()
+    const { error } = await supabase.auth.signInWithOtp({
+      email: data.email,
+      options: {
+        emailRedirectTo: '/auth/callback',
+      },
+    })
+
+    if (error) {
+      return {
+        error: true,
+        message: error.message,
+      }
+    }
+  })
+
+export const verifyCodeFn = createServerFn()
+  .validator((data: { email: string; code: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient()
+    const { error } = await supabase.auth.verifyOtp({
+      token: data.code,
+      email: data.email,
+      type: 'email'
+    })
+
+    if (error) {
+      return {
+        error: true,
+        message: error.message,
+      }
+    }
+  })
+
+export const oauthFn = createServerFn()
+  .validator((data: { provider: "github" }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: data.provider,
+      options: {
+        redirectTo: '/auth/callback',
+      },
+    })
+
+    if (error) {
+      return {
+        error: true,
+        message: error.message,
+      }
+    }
+  })
+  
 export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 	const [email, setEmail] = React.useState<string>("");
 	const [verificationCode, setVerificationCode] = React.useState<string>("");
 	const [isEmailSent, setIsEmailSent] = React.useState<boolean>(false);
-	const supabase = getSupabaseBrowserClient();
   const router = useRouter()
 
 	// Email magic link login mutation
 	const loginMutation = useMutation({
-		mutationFn: async (email: string) => {
-			const { data, error } = await supabase.auth.signInWithOtp({
-				email,
-				options: {
-					emailRedirectTo: `${location.origin}/auth/callback`,
-				},
-			});
-
-			if (error) {
-				throw new Error(error.message);
-			}
-
-			return data;
-		},
+		mutationFn: loginFn,
 		onSuccess: () => {
 			setIsEmailSent(true);
 			toast.success("Login verification code sent to your email");
@@ -46,22 +89,7 @@ export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 
 	// Verification code login mutation
 	const verifyCodeMutation = useMutation({
-		mutationFn: async ({ email, code }: { email: string; code: string }) => {
-			const { data, error } = await supabase.auth.verifyOtp({
-				email,
-				token: code,
-				type: "email",
-			});
-
-			console.log('data', data)
-			console.log('error', error)
-
-			if (error) {
-				throw new Error(error.message);
-			}
-
-			return data;
-		},
+		mutationFn: verifyCodeFn,
 		onSuccess: () => {
 			toast.success("Login successful");
 			// Redirect the user after successful verification
@@ -75,17 +103,12 @@ export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 
 	// OAuth login mutation
 	const oauthMutation = useMutation({
-		mutationFn: async (provider: "github") => {
-			const { error } = await supabase.auth.signInWithOAuth({
-				provider,
-				options: {
-					redirectTo: `${window.location.origin}/auth/verify`,
-				},
-			});
-
-			if (error) {
-				throw new Error(error.message);
-			}
+		mutationFn: oauthFn,
+		onSuccess: () => {
+			toast.success("Login successful");
+			// Redirect the user after successful verification
+      console.log('now redirect to /')
+      router.navigate({ to: '/' })
 		},
 		onError: (error) => {
 			toast.error(`GitHub login failed: ${error.message}`);
@@ -107,12 +130,12 @@ export function UserAuthFormLogin({ className, ...props }: UserAuthFormProps) {
 
 	async function onSubmit(event: React.SyntheticEvent) {
 		event.preventDefault();
-		loginMutation.mutate(email);
+		loginMutation.mutate({ data: { email } });
 	}
 
 	async function onVerifyCode(event: React.SyntheticEvent) {
 		event.preventDefault();
-		verifyCodeMutation.mutate({ email, code: verificationCode });
+		verifyCodeMutation.mutate({ data: { email, code: verificationCode } });
 	}
 
 	return (

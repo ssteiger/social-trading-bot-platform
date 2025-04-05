@@ -15,8 +15,27 @@ import {
 } from "~/lib/components/ui/form";
 import { Input } from "~/lib/components/ui/input";
 import { toast } from "sonner";
-import { getSupabaseBrowserClient } from "~/lib/utils/supabase/client";
+import { getSupabaseServerClient } from "~/lib/utils/supabase/server";
+import { createServerFn } from "@tanstack/react-start";
 
+export const verifyCodeFn = createServerFn()
+  .validator((d: { email: string; code: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = await getSupabaseServerClient()
+    const { error } = await supabase.auth.verifyOtp({
+      token: data.code,
+      email: data.email,
+      type: 'email'
+    })
+
+    if (error) {
+      return {
+        error: true,
+        message: error.message,
+      }
+    }
+  })
+  
 const formSchema = z.object({
 	code: z.string().min(1, {
 		message: "Verification code is required",
@@ -46,13 +65,11 @@ export function UserAuthVerificationCodeForm({
 		setIsLoading(true);
 
 		try {
-      const supabase = getSupabaseBrowserClient()
-
-      const { data, error } = await supabase.auth.verifyOtp({
-        token: values.code,
+      const { data, error } = await verifyCodeFn({
         email,
-        type: 'email'
+        code: values.code,
       })
+
 
       console.log('data', data)
       console.log('error', error)

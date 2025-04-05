@@ -8,7 +8,7 @@ import { Button } from "~/lib/components/ui/button";
 import { Input } from "~/lib/components/ui/input";
 import { Label } from "~/lib/components/ui/label";
 import { cn } from "~/lib/utils/cn";
-import { getSupabaseBrowserClient } from "~/lib/utils/supabase/client";
+import { loginFn, oauthFn, verifyCodeFn } from "../../login/-components/user-auth-form";
 
 // Add members to interface or use type directly
 type UserAuthFormProps = React.HTMLAttributes<HTMLDivElement>;
@@ -20,19 +20,11 @@ export function UserAuthFormRegister({
 	const [email, setEmail] = React.useState<string>("");
 	const [verificationCode, setVerificationCode] = React.useState<string>("");
 	const [isEmailSent, setIsEmailSent] = React.useState<boolean>(false);
-	const supabase = getSupabaseBrowserClient();
   const router = useRouter()
 
 	// Email signup mutation - updated to passwordless
 	const emailSignup = useMutation({
-		mutationFn: async ({ email }: { email: string }) => {
-			return supabase.auth.signInWithOtp({
-				email,
-				options: {
-					emailRedirectTo: `${location.origin}/auth/callback`,
-				},
-			});
-		},
+		mutationFn: loginFn,
 		onSuccess: () => {
 			setIsEmailSent(true);
 			toast.success("Registration verification code sent to your email");
@@ -44,19 +36,7 @@ export function UserAuthFormRegister({
 
 	// Verification code registration mutation
 	const verifyCodeMutation = useMutation({
-		mutationFn: async ({ email, code }: { email: string; code: string }) => {
-			const { data, error } = await supabase.auth.verifyOtp({
-				email,
-				token: code,
-				type: "email",
-			});
-
-			if (error) {
-				throw new Error(error.message);
-			}
-
-			return data;
-		},
+		mutationFn: verifyCodeFn,
 		onSuccess: () => {
 			toast.success("Registration successful");
 			// Redirect the user after successful verification
@@ -69,14 +49,7 @@ export function UserAuthFormRegister({
 
 	// GitHub OAuth mutation
 	const githubSignIn = useMutation({
-		mutationFn: async () => {
-			return supabase.auth.signInWithOAuth({
-				provider: "github",
-				options: {
-					redirectTo: `${window.location.origin}/auth/verify`,
-				},
-			});
-		},
+		mutationFn: oauthFn,
 		onError: (error) => {
 			toast.error(`GitHub sign-in failed: ${error.message}`);
 		},

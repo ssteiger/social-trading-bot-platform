@@ -1,16 +1,15 @@
 import { parseCookies, setCookie } from '@tanstack/react-start/server'
 import { createServerClient } from '@supabase/ssr'
-
-const NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321"
-const NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+import type { Database } from '~/types/supabase'
 
 export function getSupabaseServerClient() {
-  return createServerClient(
-    process.env.SUPABASE_URL! || NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY! || NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  return createServerClient<Database>(
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    process.env.SUPABASE_URL!,
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    process.env.SUPABASE_ANON_KEY!,
     {
       cookies: {
-        // @ts-ignore Wait till Supabase overload works
         getAll() {
           return Object.entries(parseCookies()).map(([name, value]) => ({
             name,
@@ -18,9 +17,9 @@ export function getSupabaseServerClient() {
           }))
         },
         setAll(cookies) {
-          cookies.forEach((cookie) => {
+          for (const cookie of cookies) {
             setCookie(cookie.name, cookie.value)
-          })
+          }
         },
       },
     },

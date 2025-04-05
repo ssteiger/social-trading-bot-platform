@@ -8,7 +8,7 @@ import {
 	MoreVerticalIcon,
 	UserCircleIcon,
 } from "lucide-react";
-import { Link, useRouter } from "@tanstack/react-router";
+import { redirect } from "@tanstack/react-router";
 
 import { Avatar, AvatarFallback, AvatarImage } from "~/lib/components/ui/avatar";
 import {
@@ -26,7 +26,27 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "~/lib/components/ui/sidebar";
-import { getSupabaseBrowserClient } from "~/lib/utils/supabase/client";
+import { getSupabaseServerClient } from "~/lib/utils/supabase/server";
+import { createServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
+
+const logoutFn = createServerFn().handler(async () => {
+  const supabase = getSupabaseServerClient()
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    return {
+      error: true,
+      message: error.message,
+    }
+  }
+
+  throw redirect({
+    href: '/auth/login',
+  })
+})
+
 
 export function NavUser({
 	user,
@@ -38,15 +58,16 @@ export function NavUser({
 	};
 }) {
 	const { isMobile } = useSidebar();
-	const supabase = getSupabaseBrowserClient();
-	const router = useRouter();
 
-	const handleLogout = async () => {
-		const { error } = await supabase.auth.signOut();
-		if (!error) {
-			router.navigate({ to: "/auth/login" });
-		}
-	};
+  const logOutMutation = useMutation({
+		mutationFn: logoutFn,
+		onSuccess: () => {
+			toast.success("Logout successful");
+		},
+		onError: (error) => {
+			toast.error(`Logout failed: ${error.message}`);
+		},
+	});
 
 	return (
 		<SidebarMenu>
@@ -116,7 +137,7 @@ export function NavUser({
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={handleLogout}>
+						<DropdownMenuItem onClick={() => logOutMutation.mutateAsync()}>
 							<LogOutIcon />
 							Log out
 						</DropdownMenuItem>
