@@ -1,9 +1,9 @@
 {
-	"compilerOptions": {
-		"paths": {
-			"@social-trading-bot-platform/db-drizzle": ["./path/to/your/db-drizzle"]
-		}
-	},
-	"include": ["**/*.ts"],
-	"exclude": ["node_modules"]
+  "compilerOptions": {
+    "paths": {
+      "@social-trading-bot-platform/db-drizzle": ["./path/to/your/db-drizzle"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
 }

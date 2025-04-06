@@ -7,7 +7,14 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": [".turbo", ".vscode", "node_modules", ".next", "next-env.d", "src/types/supabase.ts"]
+    "ignore": [
+      ".turbo",
+      ".vscode",
+      "node_modules",
+      "next-env.d",
+      "src/routeTree.gen.ts",
+      "src/types/supabase.ts"
+    ]
   },
   "linter": {
     "enabled": true,

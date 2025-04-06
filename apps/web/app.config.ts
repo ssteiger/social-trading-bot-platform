@@ -1,12 +1,12 @@
-import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "@tanstack/react-start/config";
-import tsConfigPaths from "vite-tsconfig-paths";
+import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from '@tanstack/react-start/config'
+import tsConfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
   vite: {
     plugins: [
       tsConfigPaths({
-        projects: ["./tsconfig.json"],
+        projects: ['./tsconfig.json'],
       }),
       tailwindcss(),
     ],
@@ -17,9 +17,9 @@ export default defineConfig({
     babel: {
       plugins: [
         [
-          "babel-plugin-react-compiler",
+          'babel-plugin-react-compiler',
           {
-            target: "19",
+            target: '19',
           },
         ],
       ],
@@ -28,11 +28,11 @@ export default defineConfig({
 
   tsr: {
     // https://github.com/TanStack/router/discussions/2863#discussioncomment-12458714
-    appDirectory: "./src",
+    appDirectory: './src',
   },
 
   server: {
     // https://tanstack.com/start/latest/docs/framework/react/hosting#deployment
     // preset: "netlify",
   },
-});
+})

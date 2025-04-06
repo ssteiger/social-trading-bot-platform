@@ -1,19 +1,19 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from '@tanstack/react-query'
 import {
   createRootRouteWithContext,
   HeadContent,
   Outlet,
   ScriptOnce,
   Scripts,
-} from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+} from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import appCss from "~/lib/styles/app.css?url";
-import { getSupabaseServerClient } from "~/lib/utils/supabase/server";
+import appCss from '~/lib/styles/app.css?url'
+import { getSupabaseServerClient } from '~/lib/utils/supabase/server'
 
-const getUser = createServerFn({ method: "GET" }).handler(async () => {
+const getUser = createServerFn({ method: 'GET' }).handler(async () => {
   const supabase = getSupabaseServerClient()
 
   const {
@@ -21,45 +21,45 @@ const getUser = createServerFn({ method: "GET" }).handler(async () => {
   } = await supabase.auth.getUser()
 
   console.log('getUser', { user })
-  
-  return user || null;
-});
+
+  return user || null
+})
 
 export const Route = createRootRouteWithContext<{
-  queryClient: QueryClient;
-  user: Awaited<ReturnType<typeof getUser>>;
+  queryClient: QueryClient
+  user: Awaited<ReturnType<typeof getUser>>
 }>()({
   beforeLoad: async ({ context }) => {
     const user = await context.queryClient.fetchQuery({
-      queryKey: ["user"],
+      queryKey: ['user'],
       queryFn: () => getUser(),
-    }); // we're using react-query for caching, see router.tsx
-    return { user };
+    }) // we're using react-query for caching, see router.tsx
+    return { user }
   },
   head: () => ({
     meta: [
       {
-        charSet: "utf-8",
+        charSet: 'utf-8',
       },
       {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1',
       },
       {
-        title: "Social Trading Bot Platform",
+        title: 'Social Trading Bot Platform',
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [{ rel: 'stylesheet', href: appCss }],
   }),
   component: RootComponent,
-});
+})
 
 function RootComponent() {
   return (
     <RootDocument>
       <Outlet />
     </RootDocument>
-  );
+  )
 }
 
 function RootDocument({ children }: { readonly children: React.ReactNode }) {
@@ -89,5 +89,5 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
-  );
+  )
 }

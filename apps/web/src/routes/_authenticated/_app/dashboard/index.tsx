@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PriceChart } from "./-components/price-chart";
+import { createFileRoute } from '@tanstack/react-router'
+import { PriceChart } from './-components/price-chart'
 
 const DashboardPage = () => {
   return (
@@ -7,10 +7,9 @@ const DashboardPage = () => {
       <p className="text-muted-foreground">Dashboard</p>
       <PriceChart companyId="AAPL" />
     </div>
-  );
+  )
 }
 
-export const Route = createFileRoute("/_authenticated/_app/dashboard/")({
+export const Route = createFileRoute('/_authenticated/_app/dashboard/')({
   component: DashboardPage,
-});
-
+})

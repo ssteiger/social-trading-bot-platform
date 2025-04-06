@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /*
 create table public.exchanges (
@@ -14,15 +14,15 @@ create table public.exchanges (
 */
 
 async function createExchanges(supabase: SupabaseClient) {
-	const exchanges = [
-		{
-			exchange_id: "HAM",
-			exchange_name: "Hamburg Stock Exchange",
-			exchange_code: "HAM",
-			trading_fee_percent: 0.15,
-			is_active: true,
-		},
-		/*
+  const exchanges = [
+    {
+      exchange_id: 'HAM',
+      exchange_name: 'Hamburg Stock Exchange',
+      exchange_code: 'HAM',
+      trading_fee_percent: 0.15,
+      is_active: true,
+    },
+    /*
 		{
 			exchange_name: "Berlin Stock Exchange",
 			exchange_code: "BER",
@@ -36,22 +36,22 @@ async function createExchanges(supabase: SupabaseClient) {
 			is_active: true,
 		},
 		*/
-	];
+  ]
 
-	console.log("Creating exchanges...");
+  console.log('Creating exchanges...')
 
-	const { data, error } = await supabase
-		.from("exchange")
-		.upsert(exchanges, { onConflict: "exchange_code" })
-		.select();
+  const { data, error } = await supabase
+    .from('exchange')
+    .upsert(exchanges, { onConflict: 'exchange_code' })
+    .select()
 
-	if (error) {
-		console.error("Error creating exchanges:", error);
-		throw error;
-	}
+  if (error) {
+    console.error('Error creating exchanges:', error)
+    throw error
+  }
 
-	console.log(`Created ${data?.length} exchanges successfully.`);
-	return data;
+  console.log(`Created ${data?.length} exchanges successfully.`)
+  return data
 }
 
-export { createExchanges };
+export { createExchanges }
