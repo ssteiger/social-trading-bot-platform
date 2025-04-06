@@ -153,6 +153,24 @@ export type Database = {
         }
         Relationships: []
       }
+      logs: {
+        Row: {
+          created_at: string | null
+          id: number
+          message: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          message: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          message?: string
+        }
+        Relationships: []
+      }
       order: {
         Row: {
           bot_id: number

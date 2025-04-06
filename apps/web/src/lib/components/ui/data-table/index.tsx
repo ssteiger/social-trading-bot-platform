@@ -71,7 +71,7 @@ export function DataTable<TData>({
   showSelectColumn = true,
   searchableColumns = [],
   rowViewerContent: CellViewerContent,
-  pageSize = 50,
+  pageSize = 100,
 }: DataTableProps<TData>) {
   // Create the select column
   const selectColumn: ColumnDef<TData> = {
@@ -185,6 +185,8 @@ export function DataTable<TData>({
 
   console.log({ data })
   console.log({ table })
+
+  console.log({ pageCount: table.getPageCount() })
 
   // Add state for the selected row
   const [selectedRow, setSelectedRow] = React.useState<TData | null>(null)
@@ -327,7 +329,7 @@ export function DataTable<TData>({
                 <SelectValue placeholder={table.getState().pagination.pageSize} />
               </SelectTrigger>
               <SelectContent side="top">
-                {[10, 20, 30, 40, 50].map((pageSize) => (
+                {[50, 100, 500, 1000, 5000].map((pageSize) => (
                   <SelectItem key={pageSize} value={`${pageSize}`}>
                     {pageSize}
                   </SelectItem>

@@ -2,9 +2,16 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { BotsManager } from './bots-logic/botsManager'
 import { OrderStatusEnum, OrderTypeEnum } from './types/enums'
 import type { Database } from './types/supabase'
+import { createLogger } from './utils/logger'
 
 async function startSimpleBots(supabase: SupabaseClient<Database>) {
   console.log('Starting trading bots...')
+  
+  // Create logger instance
+  const logger = createLogger(supabase)
+  
+  // Log startup to database
+  await logger.info('Starting trading bots system')
 
   // Create a bots manager instance
   const botsManager = new BotsManager(supabase)
@@ -14,13 +21,18 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
 
   if (bots.length === 0) {
     console.warn('No bots found in the database!')
+    await logger.warn('No bots found in the database. Trading system idle.')
     return
   }
 
   console.log(`Found ${bots.length} bots. Starting trading operations...`)
+  await logger.info(`Found ${bots.length} bots. Starting trading operations.`)
 
   // Assign different strategies to bots based on their character
   for (const bot of bots) {
+    // Log bot startup
+    await logger.botInfo(bot.bot_name, bot.bot_id, 'Initializing trading bot')
+    
     // Set up a recurring process to generate and match orders
     setInterval(
       async () => {
@@ -29,6 +41,7 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
           const companies = await botsManager.getCompanies()
           if (companies.length === 0) {
             console.log(`No companies available for bot ${bot.bot_name} to trade`)
+            await logger.botInfo(bot.bot_name, bot.bot_id, 'No companies available to trade')
             return
           }
 
@@ -88,9 +101,19 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
                     `Error creating ${isBuy ? 'buy' : 'sell'} order for bot ${bot.bot_name}:`,
                     insertError,
                   )
+                  await logger.botError(
+                    bot.bot_name, 
+                    bot.bot_id, 
+                    `failed to create ${isBuy ? 'buy' : 'sell'} order for ${quantity} shares of ${randomCompany.ticker_symbol} at $${(price).toFixed(2)}: ${insertError.message}`
+                  )
                 } else {
                   console.log(
                     `Bot ${bot.bot_name} created a ${isBuy ? 'buy' : 'sell'} order for ${quantity} shares of ${randomCompany.ticker_symbol} at ${price}`,
+                  )
+                  await logger.botInfo(
+                    bot.bot_name, 
+                    bot.bot_id, 
+                    `created a ${isBuy ? 'buy' : 'sell'} order for ${quantity} shares of ${randomCompany.ticker_symbol} at $${(price).toFixed(2)}`
                   )
                 }
               }
@@ -108,11 +131,13 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
 
           if (error) {
             console.error(`Error fetching open orders for bot ${bot.bot_name}:`, error)
+            await logger.botError(bot.bot_name, bot.bot_id, `failed to fetch open orders: ${error.message}`)
             return
           }
 
           if (openOrders && openOrders.length > 0) {
             console.log(`Bot ${bot.bot_name} found ${openOrders.length} open orders to process`)
+            await logger.botInfo(bot.bot_name, bot.bot_id, `found ${openOrders.length} open orders to potentially match`)
 
             // Process each open order
             for (const order of openOrders) {
@@ -128,6 +153,20 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
               //console.log(`Can match order ${order.order_id}: ${canMatch}`);
               if (canMatch) {
                 console.log(`Creating matching counter-order for order ${order.order_id}`)
+                
+                // Check if the quantity is valid (greater than 0)
+                const quantityToMatch = order.quantity - order.quantity_filled;
+                if (quantityToMatch <= 0) {
+                  console.log(`Skipping order ${order.order_id} as it has no remaining quantity to match`);
+                  await logger.botInfo(bot.bot_name, bot.bot_id, `skipped order ${order.order_id} as it has no remaining quantity to match`)
+                  continue;
+                }
+                
+                // Get company info for logging
+                const company = companies.find(c => c.company_id === order.company_id);
+                const companySymbol = company ? company.ticker_symbol : `Company ID: ${order.company_id}`;
+                const priceInDollars = order.price_in_cents / 100;
+                
                 // Create a matching counter-order
                 const { error: insertError } = await supabase.from('order').insert({
                   bot_id: bot.bot_id,
@@ -135,7 +174,7 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
                   order_type: OrderTypeEnum.MARKET,
                   is_buy: !order.is_buy,
                   price_in_cents: order.price_in_cents,
-                  quantity: order.quantity - order.quantity_filled,
+                  quantity: quantityToMatch,
                   status: OrderStatusEnum.ACTIVE,
                 })
 
@@ -144,9 +183,15 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
                     `Error creating counter-order for bot ${bot.bot_name}:`,
                     insertError,
                   )
+                  await logger.botError(bot.bot_name, bot.bot_id, `failed to create counter-order for order ${order.order_id}: ${insertError.message}`)
                 } else {
                   console.log(
                     `Bot ${bot.bot_name} created a matching counter-order for order ${order.order_id}`,
+                  )
+                  await logger.botInfo(
+                    bot.bot_name, 
+                    bot.bot_id, 
+                    `created a matching ${order.is_buy ? 'sell' : 'buy'} counter-order for ${quantityToMatch} shares of ${companySymbol} at $${priceInDollars.toFixed(2)}`
                   )
                 }
               }
@@ -154,15 +199,22 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
           }
         } catch (err) {
           console.error(`Error in bot ${bot.bot_name} order processing:`, err)
+          await logger.botError(
+            bot.bot_name, 
+            bot.bot_id, 
+            `encountered an error during order processing: ${err instanceof Error ? err.message : String(err)}`
+          )
         }
       },
       5000 + Math.random() * 5000,
     ) // Random interval between 5-10 seconds
 
     console.log(`Started order processing for bot ${bot.bot_name}`)
+    await logger.botInfo(bot.bot_name, bot.bot_id, `Started order processing`)
   }
 
   console.log('All bots have been started!')
+  await logger.info('All trading bots have been successfully started')
 }
 
 export { startSimpleBots }

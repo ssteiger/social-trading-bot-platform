@@ -19,6 +19,7 @@ export type CurrentMarketPrice = InferSelectModel<
 	typeof schema.current_market_price
 >;
 export type OrderBook = InferSelectModel<typeof schema.order_book>;
+export type Log = InferSelectModel<typeof schema.logs>;
 
 // Export insert types (for creating new records)
 export type NewCompany = InferInsertModel<typeof schema.company>;
@@ -28,3 +29,4 @@ export type NewOrder = InferInsertModel<typeof schema.order>;
 export type NewTrade = InferInsertModel<typeof schema.trade>;
 export type NewPriceHistory = InferInsertModel<typeof schema.price_history>;
 export type NewBot = InferInsertModel<typeof schema.bot>;
+export type NewLog = InferInsertModel<typeof schema.logs>;

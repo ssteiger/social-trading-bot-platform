@@ -18,9 +18,11 @@ import { Route as AuthLoginIndexImport } from './routes/auth/login/index'
 import { Route as AuthenticatedAppIndexImport } from './routes/_authenticated/_app/index'
 import { Route as AuthenticatedAppTermsImport } from './routes/_authenticated/_app/terms'
 import { Route as AuthenticatedAppPrivacyImport } from './routes/_authenticated/_app/privacy'
+import { Route as AuthenticatedAppTasksIndexImport } from './routes/_authenticated/_app/tasks/index'
 import { Route as AuthenticatedAppStocksIndexImport } from './routes/_authenticated/_app/stocks/index'
 import { Route as AuthenticatedAppSettingsIndexImport } from './routes/_authenticated/_app/settings/index'
 import { Route as AuthenticatedAppOrderBookIndexImport } from './routes/_authenticated/_app/order-book/index'
+import { Route as AuthenticatedAppLogsIndexImport } from './routes/_authenticated/_app/logs/index'
 import { Route as AuthenticatedAppExchangesIndexImport } from './routes/_authenticated/_app/exchanges/index'
 import { Route as AuthenticatedAppDashboardIndexImport } from './routes/_authenticated/_app/dashboard/index'
 import { Route as AuthenticatedAppCompaniesIndexImport } from './routes/_authenticated/_app/companies/index'
@@ -73,6 +75,14 @@ const AuthenticatedAppPrivacyRoute = AuthenticatedAppPrivacyImport.update({
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 
+const AuthenticatedAppTasksIndexRoute = AuthenticatedAppTasksIndexImport.update(
+  {
+    id: '/tasks/',
+    path: '/tasks/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any,
+)
+
 const AuthenticatedAppStocksIndexRoute =
   AuthenticatedAppStocksIndexImport.update({
     id: '/stocks/',
@@ -93,6 +103,12 @@ const AuthenticatedAppOrderBookIndexRoute =
     path: '/order-book/',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+
+const AuthenticatedAppLogsIndexRoute = AuthenticatedAppLogsIndexImport.update({
+  id: '/logs/',
+  path: '/logs/',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 
 const AuthenticatedAppExchangesIndexRoute =
   AuthenticatedAppExchangesIndexImport.update({
@@ -243,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppExchangesIndexImport
       parentRoute: typeof AuthenticatedAppImport
     }
+    '/_authenticated/_app/logs/': {
+      id: '/_authenticated/_app/logs/'
+      path: '/logs'
+      fullPath: '/logs'
+      preLoaderRoute: typeof AuthenticatedAppLogsIndexImport
+      parentRoute: typeof AuthenticatedAppImport
+    }
     '/_authenticated/_app/order-book/': {
       id: '/_authenticated/_app/order-book/'
       path: '/order-book'
@@ -262,6 +285,13 @@ declare module '@tanstack/react-router' {
       path: '/stocks'
       fullPath: '/stocks'
       preLoaderRoute: typeof AuthenticatedAppStocksIndexImport
+      parentRoute: typeof AuthenticatedAppImport
+    }
+    '/_authenticated/_app/tasks/': {
+      id: '/_authenticated/_app/tasks/'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedAppTasksIndexImport
       parentRoute: typeof AuthenticatedAppImport
     }
     '/_authenticated/_app/settings/account/': {
@@ -306,9 +336,11 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppCompaniesIndexRoute: typeof AuthenticatedAppCompaniesIndexRoute
   AuthenticatedAppDashboardIndexRoute: typeof AuthenticatedAppDashboardIndexRoute
   AuthenticatedAppExchangesIndexRoute: typeof AuthenticatedAppExchangesIndexRoute
+  AuthenticatedAppLogsIndexRoute: typeof AuthenticatedAppLogsIndexRoute
   AuthenticatedAppOrderBookIndexRoute: typeof AuthenticatedAppOrderBookIndexRoute
   AuthenticatedAppSettingsIndexRoute: typeof AuthenticatedAppSettingsIndexRoute
   AuthenticatedAppStocksIndexRoute: typeof AuthenticatedAppStocksIndexRoute
+  AuthenticatedAppTasksIndexRoute: typeof AuthenticatedAppTasksIndexRoute
   AuthenticatedAppSettingsAccountIndexRoute: typeof AuthenticatedAppSettingsAccountIndexRoute
   AuthenticatedAppSettingsAppearanceIndexRoute: typeof AuthenticatedAppSettingsAppearanceIndexRoute
   AuthenticatedAppSettingsDisplayIndexRoute: typeof AuthenticatedAppSettingsDisplayIndexRoute
@@ -324,9 +356,11 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppCompaniesIndexRoute: AuthenticatedAppCompaniesIndexRoute,
   AuthenticatedAppDashboardIndexRoute: AuthenticatedAppDashboardIndexRoute,
   AuthenticatedAppExchangesIndexRoute: AuthenticatedAppExchangesIndexRoute,
+  AuthenticatedAppLogsIndexRoute: AuthenticatedAppLogsIndexRoute,
   AuthenticatedAppOrderBookIndexRoute: AuthenticatedAppOrderBookIndexRoute,
   AuthenticatedAppSettingsIndexRoute: AuthenticatedAppSettingsIndexRoute,
   AuthenticatedAppStocksIndexRoute: AuthenticatedAppStocksIndexRoute,
+  AuthenticatedAppTasksIndexRoute: AuthenticatedAppTasksIndexRoute,
   AuthenticatedAppSettingsAccountIndexRoute:
     AuthenticatedAppSettingsAccountIndexRoute,
   AuthenticatedAppSettingsAppearanceIndexRoute:
@@ -364,9 +398,11 @@ export interface FileRoutesByFullPath {
   '/companies': typeof AuthenticatedAppCompaniesIndexRoute
   '/dashboard': typeof AuthenticatedAppDashboardIndexRoute
   '/exchanges': typeof AuthenticatedAppExchangesIndexRoute
+  '/logs': typeof AuthenticatedAppLogsIndexRoute
   '/order-book': typeof AuthenticatedAppOrderBookIndexRoute
   '/settings': typeof AuthenticatedAppSettingsIndexRoute
   '/stocks': typeof AuthenticatedAppStocksIndexRoute
+  '/tasks': typeof AuthenticatedAppTasksIndexRoute
   '/settings/account': typeof AuthenticatedAppSettingsAccountIndexRoute
   '/settings/appearance': typeof AuthenticatedAppSettingsAppearanceIndexRoute
   '/settings/display': typeof AuthenticatedAppSettingsDisplayIndexRoute
@@ -385,9 +421,11 @@ export interface FileRoutesByTo {
   '/companies': typeof AuthenticatedAppCompaniesIndexRoute
   '/dashboard': typeof AuthenticatedAppDashboardIndexRoute
   '/exchanges': typeof AuthenticatedAppExchangesIndexRoute
+  '/logs': typeof AuthenticatedAppLogsIndexRoute
   '/order-book': typeof AuthenticatedAppOrderBookIndexRoute
   '/settings': typeof AuthenticatedAppSettingsIndexRoute
   '/stocks': typeof AuthenticatedAppStocksIndexRoute
+  '/tasks': typeof AuthenticatedAppTasksIndexRoute
   '/settings/account': typeof AuthenticatedAppSettingsAccountIndexRoute
   '/settings/appearance': typeof AuthenticatedAppSettingsAppearanceIndexRoute
   '/settings/display': typeof AuthenticatedAppSettingsDisplayIndexRoute
@@ -408,9 +446,11 @@ export interface FileRoutesById {
   '/_authenticated/_app/companies/': typeof AuthenticatedAppCompaniesIndexRoute
   '/_authenticated/_app/dashboard/': typeof AuthenticatedAppDashboardIndexRoute
   '/_authenticated/_app/exchanges/': typeof AuthenticatedAppExchangesIndexRoute
+  '/_authenticated/_app/logs/': typeof AuthenticatedAppLogsIndexRoute
   '/_authenticated/_app/order-book/': typeof AuthenticatedAppOrderBookIndexRoute
   '/_authenticated/_app/settings/': typeof AuthenticatedAppSettingsIndexRoute
   '/_authenticated/_app/stocks/': typeof AuthenticatedAppStocksIndexRoute
+  '/_authenticated/_app/tasks/': typeof AuthenticatedAppTasksIndexRoute
   '/_authenticated/_app/settings/account/': typeof AuthenticatedAppSettingsAccountIndexRoute
   '/_authenticated/_app/settings/appearance/': typeof AuthenticatedAppSettingsAppearanceIndexRoute
   '/_authenticated/_app/settings/display/': typeof AuthenticatedAppSettingsDisplayIndexRoute
@@ -431,9 +471,11 @@ export interface FileRouteTypes {
     | '/companies'
     | '/dashboard'
     | '/exchanges'
+    | '/logs'
     | '/order-book'
     | '/settings'
     | '/stocks'
+    | '/tasks'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -451,9 +493,11 @@ export interface FileRouteTypes {
     | '/companies'
     | '/dashboard'
     | '/exchanges'
+    | '/logs'
     | '/order-book'
     | '/settings'
     | '/stocks'
+    | '/tasks'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -472,9 +516,11 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/companies/'
     | '/_authenticated/_app/dashboard/'
     | '/_authenticated/_app/exchanges/'
+    | '/_authenticated/_app/logs/'
     | '/_authenticated/_app/order-book/'
     | '/_authenticated/_app/settings/'
     | '/_authenticated/_app/stocks/'
+    | '/_authenticated/_app/tasks/'
     | '/_authenticated/_app/settings/account/'
     | '/_authenticated/_app/settings/appearance/'
     | '/_authenticated/_app/settings/display/'
@@ -527,9 +573,11 @@ export const routeTree = rootRoute
         "/_authenticated/_app/companies/",
         "/_authenticated/_app/dashboard/",
         "/_authenticated/_app/exchanges/",
+        "/_authenticated/_app/logs/",
         "/_authenticated/_app/order-book/",
         "/_authenticated/_app/settings/",
         "/_authenticated/_app/stocks/",
+        "/_authenticated/_app/tasks/",
         "/_authenticated/_app/settings/account/",
         "/_authenticated/_app/settings/appearance/",
         "/_authenticated/_app/settings/display/",
@@ -574,6 +622,10 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/_app/exchanges/index.tsx",
       "parent": "/_authenticated/_app"
     },
+    "/_authenticated/_app/logs/": {
+      "filePath": "_authenticated/_app/logs/index.tsx",
+      "parent": "/_authenticated/_app"
+    },
     "/_authenticated/_app/order-book/": {
       "filePath": "_authenticated/_app/order-book/index.tsx",
       "parent": "/_authenticated/_app"
@@ -584,6 +636,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_app/stocks/": {
       "filePath": "_authenticated/_app/stocks/index.tsx",
+      "parent": "/_authenticated/_app"
+    },
+    "/_authenticated/_app/tasks/": {
+      "filePath": "_authenticated/_app/tasks/index.tsx",
       "parent": "/_authenticated/_app"
     },
     "/_authenticated/_app/settings/account/": {

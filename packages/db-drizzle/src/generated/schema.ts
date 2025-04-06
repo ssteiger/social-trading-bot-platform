@@ -1,7 +1,17 @@
-import { pgTable, serial, varchar, timestamp, text, bigint, foreignKey, unique, check, integer, numeric, boolean, index, pgView } from "drizzle-orm/pg-core"
+import { pgTable, index, serial, timestamp, text, varchar, bigint, foreignKey, unique, check, integer, numeric, boolean, pgView } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
+
+export const logs = pgTable("logs", {
+	id: serial().primaryKey().notNull(),
+	created_at: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
+	message: text().notNull(),
+}, (table) => {
+	return {
+		created_at_idx: index("logs_created_at_idx").using("btree", table.created_at.asc().nullsLast().op("timestamptz_ops")),
+	}
+});
 
 export const bot = pgTable("bot", {
 	bot_id: serial().primaryKey().notNull(),
@@ -205,7 +215,7 @@ export const price_history = pgTable("price_history", {
 	period_length: varchar({ length: 20 }).notNull(),
 }, (table) => {
 	return {
-		idx_price_history_company_timestamp: index("idx_price_history_company_timestamp").using("btree", table.company_id.asc().nullsLast().op("text_ops"), table.timestamp.asc().nullsLast().op("text_ops")),
+		idx_price_history_company_timestamp: index("idx_price_history_company_timestamp").using("btree", table.company_id.asc().nullsLast().op("timestamp_ops"), table.timestamp.asc().nullsLast().op("timestamp_ops")),
 		price_history_company_id_fkey: foreignKey({
 			columns: [table.company_id],
 			foreignColumns: [company.company_id],

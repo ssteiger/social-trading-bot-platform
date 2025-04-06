@@ -62,13 +62,23 @@ const data = {
       icon: UsersIcon,
     },
     {
+      title: 'Order Book',
+      url: '/order-book',
+      icon: ClipboardListIcon,
+    },
+    {
       title: 'Bots',
       url: '/bots',
       icon: BarChartIcon,
     },
     {
-      title: 'Order Book',
-      url: '/order-book',
+      title: 'Logs',
+      url: '/logs',
+      icon: ClipboardListIcon,
+    },
+    {
+      title: 'Tasks',
+      url: '/tasks',
       icon: ClipboardListIcon,
     },
   ],
