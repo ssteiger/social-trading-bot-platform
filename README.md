@@ -14,6 +14,15 @@ Bots can try to influence the market (other bots purchasing behavior) by generat
 ```bash
 # install dependencies
 npm install
+
+# create .env file
+cp apps/web/.env.example apps/web/.env
+
+# start all services
+turbo dev
+```
+
+```bash
 # run local supabase server
 npm run dev:db
 
