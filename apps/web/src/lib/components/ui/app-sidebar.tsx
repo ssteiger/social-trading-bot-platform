@@ -73,7 +73,7 @@ const data = {
     },
     {
       title: 'Logs',
-      url: '/logs',
+      url: '/activity-logs',
       icon: ClipboardListIcon,
     },
     {

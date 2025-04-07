@@ -22,11 +22,11 @@ import { Route as AuthenticatedAppTasksIndexImport } from './routes/_authenticat
 import { Route as AuthenticatedAppStocksIndexImport } from './routes/_authenticated/_app/stocks/index'
 import { Route as AuthenticatedAppSettingsIndexImport } from './routes/_authenticated/_app/settings/index'
 import { Route as AuthenticatedAppOrderBookIndexImport } from './routes/_authenticated/_app/order-book/index'
-import { Route as AuthenticatedAppLogsIndexImport } from './routes/_authenticated/_app/logs/index'
 import { Route as AuthenticatedAppExchangesIndexImport } from './routes/_authenticated/_app/exchanges/index'
 import { Route as AuthenticatedAppDashboardIndexImport } from './routes/_authenticated/_app/dashboard/index'
 import { Route as AuthenticatedAppCompaniesIndexImport } from './routes/_authenticated/_app/companies/index'
 import { Route as AuthenticatedAppBotsIndexImport } from './routes/_authenticated/_app/bots/index'
+import { Route as AuthenticatedAppActivityLogsIndexImport } from './routes/_authenticated/_app/activity-logs/index'
 import { Route as AuthenticatedAppStocksIdImport } from './routes/_authenticated/_app/stocks/$id'
 import { Route as AuthenticatedAppSettingsNotificationsIndexImport } from './routes/_authenticated/_app/settings/notifications/index'
 import { Route as AuthenticatedAppSettingsDisplayIndexImport } from './routes/_authenticated/_app/settings/display/index'
@@ -104,12 +104,6 @@ const AuthenticatedAppOrderBookIndexRoute =
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 
-const AuthenticatedAppLogsIndexRoute = AuthenticatedAppLogsIndexImport.update({
-  id: '/logs/',
-  path: '/logs/',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-
 const AuthenticatedAppExchangesIndexRoute =
   AuthenticatedAppExchangesIndexImport.update({
     id: '/exchanges/',
@@ -136,6 +130,13 @@ const AuthenticatedAppBotsIndexRoute = AuthenticatedAppBotsIndexImport.update({
   path: '/bots/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+
+const AuthenticatedAppActivityLogsIndexRoute =
+  AuthenticatedAppActivityLogsIndexImport.update({
+    id: '/activity-logs/',
+    path: '/activity-logs/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 
 const AuthenticatedAppStocksIdRoute = AuthenticatedAppStocksIdImport.update({
   id: '/stocks/$id',
@@ -231,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppStocksIdImport
       parentRoute: typeof AuthenticatedAppImport
     }
+    '/_authenticated/_app/activity-logs/': {
+      id: '/_authenticated/_app/activity-logs/'
+      path: '/activity-logs'
+      fullPath: '/activity-logs'
+      preLoaderRoute: typeof AuthenticatedAppActivityLogsIndexImport
+      parentRoute: typeof AuthenticatedAppImport
+    }
     '/_authenticated/_app/bots/': {
       id: '/_authenticated/_app/bots/'
       path: '/bots'
@@ -257,13 +265,6 @@ declare module '@tanstack/react-router' {
       path: '/exchanges'
       fullPath: '/exchanges'
       preLoaderRoute: typeof AuthenticatedAppExchangesIndexImport
-      parentRoute: typeof AuthenticatedAppImport
-    }
-    '/_authenticated/_app/logs/': {
-      id: '/_authenticated/_app/logs/'
-      path: '/logs'
-      fullPath: '/logs'
-      preLoaderRoute: typeof AuthenticatedAppLogsIndexImport
       parentRoute: typeof AuthenticatedAppImport
     }
     '/_authenticated/_app/order-book/': {
@@ -332,11 +333,11 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppTermsRoute: typeof AuthenticatedAppTermsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppStocksIdRoute: typeof AuthenticatedAppStocksIdRoute
+  AuthenticatedAppActivityLogsIndexRoute: typeof AuthenticatedAppActivityLogsIndexRoute
   AuthenticatedAppBotsIndexRoute: typeof AuthenticatedAppBotsIndexRoute
   AuthenticatedAppCompaniesIndexRoute: typeof AuthenticatedAppCompaniesIndexRoute
   AuthenticatedAppDashboardIndexRoute: typeof AuthenticatedAppDashboardIndexRoute
   AuthenticatedAppExchangesIndexRoute: typeof AuthenticatedAppExchangesIndexRoute
-  AuthenticatedAppLogsIndexRoute: typeof AuthenticatedAppLogsIndexRoute
   AuthenticatedAppOrderBookIndexRoute: typeof AuthenticatedAppOrderBookIndexRoute
   AuthenticatedAppSettingsIndexRoute: typeof AuthenticatedAppSettingsIndexRoute
   AuthenticatedAppStocksIndexRoute: typeof AuthenticatedAppStocksIndexRoute
@@ -352,11 +353,12 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppTermsRoute: AuthenticatedAppTermsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppStocksIdRoute: AuthenticatedAppStocksIdRoute,
+  AuthenticatedAppActivityLogsIndexRoute:
+    AuthenticatedAppActivityLogsIndexRoute,
   AuthenticatedAppBotsIndexRoute: AuthenticatedAppBotsIndexRoute,
   AuthenticatedAppCompaniesIndexRoute: AuthenticatedAppCompaniesIndexRoute,
   AuthenticatedAppDashboardIndexRoute: AuthenticatedAppDashboardIndexRoute,
   AuthenticatedAppExchangesIndexRoute: AuthenticatedAppExchangesIndexRoute,
-  AuthenticatedAppLogsIndexRoute: AuthenticatedAppLogsIndexRoute,
   AuthenticatedAppOrderBookIndexRoute: AuthenticatedAppOrderBookIndexRoute,
   AuthenticatedAppSettingsIndexRoute: AuthenticatedAppSettingsIndexRoute,
   AuthenticatedAppStocksIndexRoute: AuthenticatedAppStocksIndexRoute,
@@ -394,11 +396,11 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginIndexRoute
   '/auth/register': typeof AuthRegisterIndexRoute
   '/stocks/$id': typeof AuthenticatedAppStocksIdRoute
+  '/activity-logs': typeof AuthenticatedAppActivityLogsIndexRoute
   '/bots': typeof AuthenticatedAppBotsIndexRoute
   '/companies': typeof AuthenticatedAppCompaniesIndexRoute
   '/dashboard': typeof AuthenticatedAppDashboardIndexRoute
   '/exchanges': typeof AuthenticatedAppExchangesIndexRoute
-  '/logs': typeof AuthenticatedAppLogsIndexRoute
   '/order-book': typeof AuthenticatedAppOrderBookIndexRoute
   '/settings': typeof AuthenticatedAppSettingsIndexRoute
   '/stocks': typeof AuthenticatedAppStocksIndexRoute
@@ -417,11 +419,11 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginIndexRoute
   '/auth/register': typeof AuthRegisterIndexRoute
   '/stocks/$id': typeof AuthenticatedAppStocksIdRoute
+  '/activity-logs': typeof AuthenticatedAppActivityLogsIndexRoute
   '/bots': typeof AuthenticatedAppBotsIndexRoute
   '/companies': typeof AuthenticatedAppCompaniesIndexRoute
   '/dashboard': typeof AuthenticatedAppDashboardIndexRoute
   '/exchanges': typeof AuthenticatedAppExchangesIndexRoute
-  '/logs': typeof AuthenticatedAppLogsIndexRoute
   '/order-book': typeof AuthenticatedAppOrderBookIndexRoute
   '/settings': typeof AuthenticatedAppSettingsIndexRoute
   '/stocks': typeof AuthenticatedAppStocksIndexRoute
@@ -442,11 +444,11 @@ export interface FileRoutesById {
   '/auth/login/': typeof AuthLoginIndexRoute
   '/auth/register/': typeof AuthRegisterIndexRoute
   '/_authenticated/_app/stocks/$id': typeof AuthenticatedAppStocksIdRoute
+  '/_authenticated/_app/activity-logs/': typeof AuthenticatedAppActivityLogsIndexRoute
   '/_authenticated/_app/bots/': typeof AuthenticatedAppBotsIndexRoute
   '/_authenticated/_app/companies/': typeof AuthenticatedAppCompaniesIndexRoute
   '/_authenticated/_app/dashboard/': typeof AuthenticatedAppDashboardIndexRoute
   '/_authenticated/_app/exchanges/': typeof AuthenticatedAppExchangesIndexRoute
-  '/_authenticated/_app/logs/': typeof AuthenticatedAppLogsIndexRoute
   '/_authenticated/_app/order-book/': typeof AuthenticatedAppOrderBookIndexRoute
   '/_authenticated/_app/settings/': typeof AuthenticatedAppSettingsIndexRoute
   '/_authenticated/_app/stocks/': typeof AuthenticatedAppStocksIndexRoute
@@ -467,11 +469,11 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/stocks/$id'
+    | '/activity-logs'
     | '/bots'
     | '/companies'
     | '/dashboard'
     | '/exchanges'
-    | '/logs'
     | '/order-book'
     | '/settings'
     | '/stocks'
@@ -489,11 +491,11 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/stocks/$id'
+    | '/activity-logs'
     | '/bots'
     | '/companies'
     | '/dashboard'
     | '/exchanges'
-    | '/logs'
     | '/order-book'
     | '/settings'
     | '/stocks'
@@ -512,11 +514,11 @@ export interface FileRouteTypes {
     | '/auth/login/'
     | '/auth/register/'
     | '/_authenticated/_app/stocks/$id'
+    | '/_authenticated/_app/activity-logs/'
     | '/_authenticated/_app/bots/'
     | '/_authenticated/_app/companies/'
     | '/_authenticated/_app/dashboard/'
     | '/_authenticated/_app/exchanges/'
-    | '/_authenticated/_app/logs/'
     | '/_authenticated/_app/order-book/'
     | '/_authenticated/_app/settings/'
     | '/_authenticated/_app/stocks/'
@@ -569,11 +571,11 @@ export const routeTree = rootRoute
         "/_authenticated/_app/terms",
         "/_authenticated/_app/",
         "/_authenticated/_app/stocks/$id",
+        "/_authenticated/_app/activity-logs/",
         "/_authenticated/_app/bots/",
         "/_authenticated/_app/companies/",
         "/_authenticated/_app/dashboard/",
         "/_authenticated/_app/exchanges/",
-        "/_authenticated/_app/logs/",
         "/_authenticated/_app/order-book/",
         "/_authenticated/_app/settings/",
         "/_authenticated/_app/stocks/",
@@ -606,6 +608,10 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/_app/stocks/$id.tsx",
       "parent": "/_authenticated/_app"
     },
+    "/_authenticated/_app/activity-logs/": {
+      "filePath": "_authenticated/_app/activity-logs/index.tsx",
+      "parent": "/_authenticated/_app"
+    },
     "/_authenticated/_app/bots/": {
       "filePath": "_authenticated/_app/bots/index.tsx",
       "parent": "/_authenticated/_app"
@@ -620,10 +626,6 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_app/exchanges/": {
       "filePath": "_authenticated/_app/exchanges/index.tsx",
-      "parent": "/_authenticated/_app"
-    },
-    "/_authenticated/_app/logs/": {
-      "filePath": "_authenticated/_app/logs/index.tsx",
       "parent": "/_authenticated/_app"
     },
     "/_authenticated/_app/order-book/": {
