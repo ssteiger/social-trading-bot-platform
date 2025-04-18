@@ -20,6 +20,11 @@ import type {
 } from '../types/drizzle'
 import { OrderStatusEnum } from '../types/enums'
 import type { BotsManager } from './botsManager'
+import type { BotService } from './botsManager/services/BotService'
+import type { CompanyService } from './botsManager/services/CompanyService'
+import type { DatabaseService } from './botsManager/services/DatabaseService'
+import type { OrderService } from './botsManager/services/OrderService'
+import type { TradingService } from './botsManager/services/TradingService'
 
 /**
  * Creates a trading bot with a specific strategy
@@ -41,12 +46,25 @@ export function createBot(strategy: string, botsManager: BotsManager): TradingSt
  * Base class for all trading strategies
  */
 export class TradingStrategy {
-  protected botsManager: BotsManager
+  private botsManager: BotsManager
+
+  // Services
+  private companyService: CompanyService
+  private orderService: OrderService
+  private botService: BotService
+  private tradingService: TradingService
+  //private databaseService: DatabaseService
+
   protected riskTolerance = 0.02 // Default 2% risk per trade
   protected maxPositionSize = 0.2 // Default 20% of portfolio in one position
 
   constructor(botsManager: BotsManager) {
     this.botsManager = botsManager
+
+    this.companyService = botsManager.companyService
+    this.orderService = botsManager.orderService
+    this.botService = botsManager.botService
+    this.tradingService = botsManager.tradingService
   }
 
   /**
@@ -55,26 +73,26 @@ export class TradingStrategy {
   async executeStrategy(botId: number): Promise<void> {
     try {
       // Get bot details
-      const bot = await this.botsManager.getBotById({ bot_id: botId })
+      const bot = await this.botService.getBotById({ bot_id: botId })
       if (!bot) {
         console.error(`Bot ${botId} not found`)
         return
       }
 
       // Get all available companies
-      const companies = await this.botsManager.getCompanies()
+      const companies = await this.companyService.getCompanies()
       if (companies.length === 0) {
         console.log(`No companies available for bot ${botId} to trade`)
         return
       }
 
       // Get bot's current shareholdings
-      const shareholdings = await this.botsManager.getBotShareholdings({
+      const shareholdings = await this.botService.getBotShareholdings({
         bot_id: botId,
       })
 
       // Get bot's active orders
-      const activeOrders = await this.botsManager.getBotActiveOrders(botId)
+      const activeOrders = await this.orderService.getBotActiveOrders(botId)
 
       // Analyze market and make trading decisions
       await this.analyzeAndTrade(bot, companies, shareholdings, activeOrders)
@@ -99,7 +117,7 @@ export class TradingStrategy {
     const randomCompany = companies[Math.floor(Math.random() * companies.length)]
 
     // Get current market price for the company
-    const marketData = await this.botsManager.getCompanyMarketData(randomCompany.company_id, 1)
+    const marketData = await this.companyService.getCompanyMarketData(randomCompany.company_id, 1)
     const currentPrice = marketData[0].close_price_in_cents
 
     const isBuy = Math.random() > 0.5
@@ -133,10 +151,7 @@ export class TradingStrategy {
       }
 
       // Place the order
-      const result = await this.botsManager.placeOrder({
-        bot_id: botId,
-        orderData,
-      })
+      const result = await this.orderService.placeOrder(orderData)
 
       if (result) {
         console.log(
@@ -206,11 +221,11 @@ export class MomentumStrategy extends TradingStrategy {
     // Process each company
     for (const company of companies) {
       // Get historical price data
-      const priceHistory = await this.botsManager.getCompanyMarketData(company.company_id, 30)
+      const priceHistory = await this.companyService.getCompanyMarketData(company.company_id, 30)
       if (priceHistory.length < 14) continue // Need enough data for analysis
 
       // Get current market price
-      const marketData = await this.botsManager.getCompanyMarketData(company.company_id, 1)
+      const marketData = await this.companyService.getCompanyMarketData(company.company_id, 1)
       const currentPrice = marketData.length > 0 ? marketData[0].close_price_in_cents : 10000 // Default to 100.00 if no market data available
 
       // Extract close prices
@@ -272,11 +287,11 @@ export class MeanReversionStrategy extends TradingStrategy {
     // Process each company
     for (const company of companies) {
       // Get historical price data
-      const priceHistory = await this.botsManager.getCompanyMarketData(company.company_id, 30)
+      const priceHistory = await this.companyService.getCompanyMarketData(company.company_id, 30)
       if (priceHistory.length < 14) continue // Need enough data for analysis
 
       // Get current market price
-      const marketData = await this.botsManager.getCompanyMarketData(company.company_id, 1)
+      const marketData = await this.companyService.getCompanyMarketData(company.company_id, 1)
       const currentPrice = marketData.length > 0 ? marketData[0].close_price_in_cents : 10000 // Default to 100.00 if no market data available
 
       // Extract close prices
@@ -338,7 +353,7 @@ export class DividendStrategy extends TradingStrategy {
     // Process each company
     for (const company of companies) {
       // Get current market price
-      const marketData = await this.botsManager.getCompanyMarketData(company.company_id, 1)
+      const marketData = await this.companyService.getCompanyMarketData(company.company_id, 1)
       const currentPrice = marketData.length > 0 ? marketData[0].close_price_in_cents : 10000 // Default to 100.00 if no market data available
 
       // Find current shareholding for this company

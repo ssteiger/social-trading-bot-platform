@@ -10,7 +10,7 @@ async function createIPOs(supabase: SupabaseClient) {
   const botsManager = new BotsManager(supabase)
 
   // Get all bots from the database
-  const botsFromDB = await botsManager.getAllBots()
+  const botsFromDB = await botsManager.botService.getAllBots()
 
   // Fetch all companies from the database
   const { data: companiesFromDB, error: companiesError } = await supabase

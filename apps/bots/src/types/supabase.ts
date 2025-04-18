@@ -613,10 +613,10 @@ export type Database = {
     Functions: {
       accept_order: {
         Args: {
-          p_accepting_bot_id: number
-          p_order_id: number
-          p_quantity: number
-          p_trade_fee_in_cents: number
+          accepting_bot_id: number
+          target_order_id: number
+          trade_quantity: number
+          trade_fee_in_cents: number
         }
         Returns: undefined
       }

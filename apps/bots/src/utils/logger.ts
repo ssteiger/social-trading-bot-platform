@@ -41,7 +41,7 @@ export class Logger {
    * @param botId The ID of the bot
    * @param message The message to log
    */
-  async botInfo(botName: string, botId: string, message: string): Promise<void> {
+  async botInfo(botName: string, botId: number, message: string): Promise<void> {
     await this.log(`Bot ${botName} (ID: ${botId}): ${message}`)
   }
 
@@ -51,7 +51,7 @@ export class Logger {
    * @param botId The ID of the bot
    * @param message The error message to log
    */
-  async botError(botName: string, botId: string, message: string): Promise<void> {
+  async botError(botName: string, botId: number, message: string): Promise<void> {
     await this.log(`ERROR: Bot ${botName} (ID: ${botId}) ${message}`)
   }
 
@@ -62,6 +62,7 @@ export class Logger {
    */
   private async log(message: string): Promise<void> {
     try {
+      console.log('LOG:', message)
       await this.supabase.from('logs').insert({ message })
     } catch (error) {
       // If logging to the database fails, at least log to console

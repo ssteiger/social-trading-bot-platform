@@ -3,14 +3,26 @@ import type { BotsManager } from '..'
 import type { Database } from '../../../types/supabase'
 import { TradingStrategy } from '../../TradingStrategy'
 
+import type { BotService } from './BotService'
+import type { CompanyService } from './CompanyService'
+import type { OrderService } from './OrderService'
+import type { DatabaseService } from './DatabaseService'
+
 export class TradingService {
   private supabase: SupabaseClient<Database>
   private botsManager: BotsManager
   private runningBots: Map<number, NodeJS.Timeout> = new Map()
 
-  constructor(supabaseClient: SupabaseClient<Database>, botsManager: BotsManager) {
+  // Services
+  private companyService: CompanyService
+  private orderService: OrderService
+  private botService: BotService
+  private tradingService: TradingService
+  //private databaseService: DatabaseService
+
+  constructor(supabaseClient: SupabaseClient<Database>, botService: BotService) {
     this.supabase = supabaseClient
-    this.botsManager = botsManager
+    this.botService = botService
   }
 
   /**
@@ -33,7 +45,7 @@ export class TradingService {
     const interval = setInterval(async () => {
       try {
         // Get bot details
-        const bot = await this.botsManager.getBotById({ bot_id: botId })
+        const bot = await this.botService.getBotById({ bot_id: botId })
         if (!bot) {
           console.error(`Bot ${botId} not found`)
           this.stopTradingBot(botId)

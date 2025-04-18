@@ -28,96 +28,19 @@ export class BotsManager {
 
     // Initialize services
     this.companyService = new CompanyService(supabaseClient)
-    this.orderService = new OrderService(supabaseClient)
     this.botService = new BotService(supabaseClient)
-    this.tradingService = new TradingService(supabaseClient, this)
+    this.orderService = new OrderService(supabaseClient, this.botService)
+    this.tradingService = new TradingService(supabaseClient, this.botService)
     this.databaseService = new DatabaseService(supabaseClient)
   }
 
-  /**
-   * Get bot details by ID
-   */
-  async getBotById(params: { bot_id: number }) {
-    return this.botService.getBotById(params)
-  }
-
-  /**
-   * Get all bots from the database
-   */
-  async getAllBots() {
-    return this.botService.getAllBots()
-  }
-
-  /**
-   * Get all available companies
-   */
-  async getCompanies() {
-    return this.companyService.getCompanies()
-  }
-
-  /**
-   * Get shareholdings for a bot
-   */
-  async getBotShareholdings(params: { bot_id: number }) {
-    return this.botService.getBotShareholdings(params)
-  }
-
-  /**
-   * Place a new order
-   */
-  async placeOrder(params: { bot_id: number; orderData: NewOrder }) {
-    return this.orderService.placeOrder(params)
-  }
-
-  /**
-   * Cancel an active order
-   */
-  async cancelOrder(orderId: number) {
-    return this.orderService.cancelOrder(orderId)
-  }
-
-  /**
-   * Accept an existing open order by another bot
-   */
-  async acceptOrder(botId: number, orderId: number) {
-    return this.orderService.acceptOrder(botId, orderId)
-  }
-
-  /**
-   * Get active orders for a bot
-   */
-  async getBotActiveOrders(botId: number) {
-    return this.orderService.getBotActiveOrders(botId)
-  }
-
-  /**
-   * Get market data for a company
-   */
-  async getCompanyMarketData(companyId: string, limit = 100) {
-    return this.companyService.getCompanyMarketData(companyId, limit)
-  }
-
-  /**
-   * Start a simple trading bot with a strategy
-   */
-  startTradingBot({
-    botId,
-    strategyExecutionIntevalMs = 1000,
-  }: { botId: number; strategyExecutionIntevalMs: number }) {
-    this.tradingService.startTradingBot({ botId, strategyExecutionIntevalMs })
-  }
-
-  /**
-   * Stop a trading bot
-   */
-  stopTradingBot(botId: number) {
-    this.tradingService.stopTradingBot(botId)
-  }
-
-  /**
-   * Reset the database (for testing purposes)
-   */
-  async resetDatabase() {
-    return this.databaseService.resetDatabase()
+  getServices() {
+    return {
+      companyService: this.companyService,
+      orderService: this.orderService,
+      botService: this.botService,
+      tradingService: this.tradingService,
+      databaseService: this.databaseService
+    }
   }
 }

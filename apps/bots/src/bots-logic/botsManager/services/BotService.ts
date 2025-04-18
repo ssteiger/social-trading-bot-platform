@@ -60,4 +60,18 @@ export class BotService {
       ...holding,
     }))
   }
+
+  /**
+   * Get the money balance in cents for a bot
+   */
+  async getBotBalanceInCents({ bot_id }: { bot_id: number }): Promise<number | null> {
+    const bot = await this.getBotById({ bot_id });
+    
+    if (!bot) {
+      console.error(`Bot with ID ${bot_id} not found`);
+      return null;
+    }
+    
+    return bot.money_balance_in_cents;
+  }
 }

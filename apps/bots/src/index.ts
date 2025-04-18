@@ -26,7 +26,7 @@ async function startServer() {
 
     // Reset database on each start
     console.log('Resetting database...')
-    await botsManager.resetDatabase()
+    await botsManager.databaseService.resetDatabase()
     console.log('Database reset complete')
 
     // Create initial data
@@ -36,7 +36,7 @@ async function startServer() {
     //await startBots(supabase);
     await startSimpleBots(supabase)
 
-    const bots = await botsManager.getAllBots()
+    const bots = await botsManager.botService.getAllBots()
 
     console.log(`Started ${bots.length} trading bots`)
 
@@ -45,7 +45,7 @@ async function startServer() {
       console.log('Shutting down bots server...')
       // Stop all bots
       for (const bot of bots) {
-        botsManager.stopTradingBot(bot.bot_id)
+        botsManager.tradingService.stopTradingBot(bot.bot_id)
       }
       process.exit(0)
     })
@@ -54,7 +54,7 @@ async function startServer() {
     setInterval(async () => {
       try {
         const { data: trades, error } = await supabase
-          .from('trades')
+          .from('trade')
           .select('count(*)')
           .gte('executed_at', new Date(Date.now() - 100).toISOString())
 

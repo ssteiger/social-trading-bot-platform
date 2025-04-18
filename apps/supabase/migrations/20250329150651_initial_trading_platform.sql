@@ -205,7 +205,7 @@ FROM
 JOIN 
     exchange e ON c.exchange_id = e.exchange_id;
 
--- Update the match_orders function to use the new enums
+-- Update the match_orders function to fix ambiguous column references
 CREATE OR REPLACE FUNCTION match_orders() RETURNS TRIGGER AS $$
 DECLARE
     matching_order RECORD;
@@ -236,13 +236,13 @@ BEGIN
     IF NEW.is_buy THEN
         FOR matching_order IN 
             SELECT * FROM "order"
-            WHERE company_id = NEW.company_id
-              AND is_buy = FALSE
-              AND price_in_cents <= NEW.price_in_cents
-              AND status = 'active'
-              AND bot_id <> NEW.bot_id
-              AND (quantity - quantity_filled) > 0
-            ORDER BY price_in_cents ASC, created_at ASC
+            WHERE "order".company_id = NEW.company_id
+              AND "order".is_buy = FALSE
+              AND "order".price_in_cents <= NEW.price_in_cents
+              AND "order".status = 'active'
+              AND "order".bot_id <> NEW.bot_id
+              AND ("order".quantity - "order".quantity_filled) > 0
+            ORDER BY "order".price_in_cents ASC, "order".created_at ASC
         LOOP
             -- Determine quantity and price for this match
             trade_quantity := LEAST(NEW.quantity - NEW.quantity_filled, matching_order.quantity - matching_order.quantity_filled);
@@ -317,13 +317,13 @@ BEGIN
     ELSE -- This is a sell order
         FOR matching_order IN 
             SELECT * FROM "order"
-            WHERE company_id = NEW.company_id
-              AND is_buy = TRUE
-              AND price_in_cents >= NEW.price_in_cents
-              AND status = 'active'
-              AND bot_id <> NEW.bot_id
-              AND (quantity - quantity_filled) > 0
-            ORDER BY price_in_cents DESC, created_at ASC
+            WHERE "order".company_id = NEW.company_id
+              AND "order".is_buy = TRUE
+              AND "order".price_in_cents >= NEW.price_in_cents
+              AND "order".status = 'active'
+              AND "order".bot_id <> NEW.bot_id
+              AND ("order".quantity - "order".quantity_filled) > 0
+            ORDER BY "order".price_in_cents DESC, "order".created_at ASC
         LOOP
             -- Determine quantity and price for this match
             trade_quantity := LEAST(NEW.quantity - NEW.quantity_filled, matching_order.quantity - matching_order.quantity_filled);
@@ -423,7 +423,7 @@ WHEN (OLD.status IS DISTINCT FROM NEW.status OR
       OLD.quantity IS DISTINCT FROM NEW.quantity)
 EXECUTE FUNCTION match_orders();
 
--- Create a function to update price history after trades
+-- Fix the update_price_history function to avoid ambiguous column references
 CREATE OR REPLACE FUNCTION update_price_history() RETURNS TRIGGER AS $$
 DECLARE
     current_period TIMESTAMP;
@@ -438,10 +438,10 @@ BEGIN
     
     -- Check if we already have a record for this period
     SELECT EXISTS (
-        SELECT 1 FROM price_history
-        WHERE company_id = NEW.company_id
-        AND timestamp = current_period
-        AND period_length = '1min'
+        SELECT 1 FROM price_history ph
+        WHERE ph.company_id = NEW.company_id
+        AND ph.timestamp = current_period
+        AND ph.period_length = '1min'
     ) INTO period_exists;
     
     IF period_exists THEN
@@ -450,9 +450,9 @@ BEGIN
         SELECT ph.high_price_in_cents, ph.low_price_in_cents, ph.open_price_in_cents, ph.volume
         INTO current_high_price_in_cents, current_low_price_in_cents, current_open_price_in_cents, current_volume
         FROM price_history ph
-        WHERE company_id = NEW.company_id
-        AND timestamp = current_period
-        AND period_length = '1min';
+        WHERE ph.company_id = NEW.company_id
+        AND ph.timestamp = current_period
+        AND ph.period_length = '1min';
         
         -- Update record
         UPDATE price_history
