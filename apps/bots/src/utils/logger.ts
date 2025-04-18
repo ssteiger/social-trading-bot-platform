@@ -42,7 +42,7 @@ export class Logger {
    * @param message The message to log
    */
   async botInfo(botName: string, botId: number, message: string): Promise<void> {
-    await this.log(`Bot ${botName} (ID: ${botId}): ${message}`)
+    await this.log(`Bot ${botId}: ${message}`)
   }
 
   /**
@@ -52,7 +52,7 @@ export class Logger {
    * @param message The error message to log
    */
   async botError(botName: string, botId: number, message: string): Promise<void> {
-    await this.log(`ERROR: Bot ${botName} (ID: ${botId}) ${message}`)
+    await this.log(`ERROR: Bot ${botId} ${message}`)
   }
 
   /**

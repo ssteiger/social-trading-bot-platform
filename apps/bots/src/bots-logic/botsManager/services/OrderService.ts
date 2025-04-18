@@ -39,7 +39,7 @@ export class OrderService {
         is_buy: orderData.is_buy,
         price_in_cents: Number(orderData.price_in_cents),
         quantity: orderData.quantity,
-        status: 'pending',
+        status: 'active',
       } as NewOrder
 
       // Place the order
@@ -78,7 +78,6 @@ export class OrderService {
         return false
       }
 
-      console.log(`Successfully cancelled order ${orderId}`)
       return true
     } catch (error) {
       console.error(`Error in cancelOrder for order ${orderId}:`, error)
@@ -184,7 +183,7 @@ export class OrderService {
       // 8. Calculate trade details
       const tradeQuantity = remainingQuantity
       const tradePrice = orderData.price_in_cents
-      const tradeFee = (tradePrice * tradeQuantity * exchangeData.trading_fee_percent) / 100
+      const tradeFee = Math.round((tradePrice * tradeQuantity * exchangeData.trading_fee_percent) / 100)
 
       // 9. Start a transaction to process the order acceptance
       const acceptOrderDetails = {

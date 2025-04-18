@@ -65,7 +65,7 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
     setInterval(
       async () => {
         try {
-          console.log(`Running trading cycle for bot ${bot.bot_name} (ID: ${bot.bot_id})`)
+          //console.log(`Running trading cycle for bot ${bot.bot_name} (ID: ${bot.bot_id})`)
           
           // 1. Get bot's current balance and shareholdings
           const botBalance = await botService.getBotBalanceInCents({ bot_id: bot.bot_id })
@@ -97,12 +97,41 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
             // Find current market price for this company
             const companyPrice = marketPrices.find(p => p.company_id === targetCompany.company_id)
             
+            // Get the last known price if ask_price or bid_price is null
+            let effectiveAskPrice = companyPrice?.ask_price
+            let effectiveBidPrice = companyPrice?.bid_price
+            
+            // If prices are null, fetch the last price from market data
+            if (!effectiveAskPrice || !effectiveBidPrice) {
+              const marketData = await companyService.getCompanyMarketData(targetCompany.company_id, 1)
+              const lastPrice = marketData?.[0]?.low_price_in_cents ?? 100
+              
+              // Log the price fallback situation
+              await logger.botInfo(
+                bot.bot_name,
+                bot.bot_id,
+                `Price fallback for ${targetCompany.company_id}: Missing ${!effectiveAskPrice ? 'ask' : ''}${!effectiveAskPrice && !effectiveBidPrice ? ' and ' : ''}${!effectiveBidPrice ? 'bid' : ''} price. Using last price: ${lastPrice}¢`
+              )
+              
+              effectiveAskPrice = effectiveAskPrice ?? lastPrice
+              effectiveBidPrice = effectiveBidPrice ?? lastPrice
+            }
+            
+            console.log('companyPrice', companyPrice)
+            
+            // Log price decision information
+            await logger.botInfo(
+              bot.bot_name,
+              bot.bot_id,
+              `Price decision for ${targetCompany.company_id}: Ask=${effectiveAskPrice}¢, Bid=${effectiveBidPrice}¢`
+            )
+            
             if (companyPrice) {
               // Calculate how many shares to buy (random amount, max 10)
               const sharesToBuy = Math.max(1, Math.floor(Math.random() * 10))
               
               // Calculate total cost
-              const pricePerShare = companyPrice.ask_price
+              const pricePerShare = effectiveAskPrice
               const totalCost = pricePerShare * sharesToBuy
               
               // Only place order if bot has enough money
@@ -119,11 +148,11 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
                 await logger.botInfo(
                   bot.bot_name, 
                   bot.bot_id, 
-                  `Placed buy order for ${sharesToBuy} shares of ${targetCompany.company_id} at ${pricePerShare} cents each`
+                  `Placed buy order for ${targetCompany.company_id}: Ask=${pricePerShare}¢, ${sharesToBuy} shares`
                 )
                 orderPlaced = true;
               } else {
-                noOrderReason = `Insufficient balance (${botBalance} cents) to buy ${sharesToBuy} shares at ${pricePerShare} cents each (total: ${totalCost} cents)`;
+                noOrderReason = `Insufficient balance (${botBalance} ¢) to buy ${sharesToBuy} shares at ${pricePerShare}¢ each (total: ${totalCost}¢)`;
               }
             } else {
               noOrderReason = `No market price available for company ${targetCompany.company_id}`;
@@ -139,12 +168,46 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
               // Find current market price for this company
               const companyPrice = marketPrices.find(p => p.company_id === targetHolding.company_id)
               
+              // Get the last known price if ask_price or bid_price is null
+              let effectiveAskPrice = companyPrice?.ask_price
+              let effectiveBidPrice = companyPrice?.bid_price
+              
+              // If prices are null, fetch the last price from market data
+              if (!effectiveAskPrice || !effectiveBidPrice) {
+                const marketData = await companyService.getCompanyMarketData(targetHolding.company_id, 1)
+                const lastPrice = marketData?.[0]?.low_price_in_cents ?? 100
+                
+                // Log the price fallback situation
+                await logger.botInfo(
+                  bot.bot_name,
+                  bot.bot_id,
+                  `Price fallback for ${targetHolding.company_id}: Missing ${!effectiveAskPrice ? 'ask' : ''}${!effectiveAskPrice && !effectiveBidPrice ? ' and ' : ''}${!effectiveBidPrice ? 'bid' : ''} price. Using last price: ${lastPrice}¢`
+                )
+                
+                effectiveAskPrice = effectiveAskPrice ?? lastPrice
+                effectiveBidPrice = effectiveBidPrice ?? lastPrice
+              }
+              
+              // Log price decision information
+              await logger.botInfo(
+                bot.bot_name,
+                bot.bot_id,
+                `Price decision for ${targetHolding.company_id}: Ask=${effectiveAskPrice}¢, Bid=${effectiveBidPrice}¢`
+              )
+              
               if (companyPrice) {
                 // Calculate how many shares to sell (random amount, max = what bot owns)
                 const sharesToSell = Math.max(1, Math.floor(Math.random() * targetHolding.shares))
                 
                 // Calculate sell price (slightly below market to increase chances of selling)
-                const pricePerShare = Math.max(1, companyPrice.bid_price - Math.floor(Math.random() * 5))
+                const pricePerShare = Math.max(1, effectiveBidPrice - Math.floor(Math.random() * 5))
+                
+                // Log the price adjustment for selling
+                await logger.botInfo(
+                  bot.bot_name,
+                  bot.bot_id,
+                  `Sell price adjustment for ${targetHolding.company_id}: Market bid=${effectiveBidPrice}¢, Offering at ${pricePerShare}¢ (${effectiveBidPrice - pricePerShare}¢ discount)`
+                )
                 
                 await orderService.placeOrder({
                   bot_id: bot.bot_id,
@@ -158,7 +221,7 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
                 await logger.botInfo(
                   bot.bot_name, 
                   bot.bot_id, 
-                  `Placed sell order for ${sharesToSell} shares of ${targetHolding.company_id} at ${pricePerShare} cents each`
+                  `Placed sell order for ${targetHolding.company_id}: Bid=${pricePerShare}¢, ${sharesToSell} shares`
                 )
                 orderPlaced = true;
               } else {
@@ -272,8 +335,8 @@ async function startSimpleBots(supabase: SupabaseClient<Database>) {
           )
         }
       },
-      1000 + Math.random() * 1000,
-    ) // Random interval between 1-2 seconds
+      1000
+    ) // Random interval between 1-2/10 seconds
 
     console.log(`Started order processing for bot ${bot.bot_name}`)
     await logger.botInfo(bot.bot_name, bot.bot_id, 'Started order processing')
