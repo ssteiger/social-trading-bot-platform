@@ -1,15 +1,31 @@
-import { pgTable, index, serial, timestamp, text, varchar, bigint, foreignKey, unique, check, integer, numeric, boolean, pgView } from "drizzle-orm/pg-core"
+import { pgTable, index, foreignKey, unique, serial, integer, varchar, bigint, timestamp, text, check, numeric, boolean, pgView } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
 
-export const logs = pgTable("logs", {
-	id: serial().primaryKey().notNull(),
-	created_at: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
-	message: text().notNull(),
+export const shareholding = pgTable("shareholding", {
+	shareholding_id: serial().primaryKey().notNull(),
+	bot_id: integer().notNull(),
+	company_id: varchar({ length: 10 }).notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	shares: bigint({ mode: "number" }).default(0).notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	average_purchase_price_in_cents: bigint({ mode: "number" }),
+	last_updated_at: timestamp({ mode: 'string' }).defaultNow().notNull(),
 }, (table) => {
 	return {
-		created_at_idx: index("logs_created_at_idx").using("btree", table.created_at.asc().nullsLast().op("timestamptz_ops")),
+		idx_shareholding_bot_id: index("idx_shareholding_bot_id").using("btree", table.bot_id.asc().nullsLast().op("int4_ops")),
+		shareholding_bot_id_fkey: foreignKey({
+			columns: [table.bot_id],
+			foreignColumns: [bot.bot_id],
+			name: "shareholding_bot_id_fkey"
+		}),
+		shareholding_company_id_fkey: foreignKey({
+			columns: [table.company_id],
+			foreignColumns: [company.company_id],
+			name: "shareholding_company_id_fkey"
+		}),
+		shareholding_bot_id_company_id_key: unique("shareholding_bot_id_company_id_key").on(table.bot_id, table.company_id),
 	}
 });
 
@@ -62,32 +78,6 @@ export const exchange = pgTable("exchange", {
 	return {
 		exchange_exchange_code_key: unique("exchange_exchange_code_key").on(table.exchange_code),
 		exchange_id_equals_code: check("exchange_id_equals_code", sql`(exchange_id)::text = (exchange_code)::text`),
-	}
-});
-
-export const shareholding = pgTable("shareholding", {
-	shareholding_id: serial().primaryKey().notNull(),
-	bot_id: integer().notNull(),
-	company_id: varchar({ length: 10 }).notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	shares: bigint({ mode: "number" }).default(0).notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	average_purchase_price_in_cents: bigint({ mode: "number" }),
-	last_updated_at: timestamp({ mode: 'string' }).defaultNow().notNull(),
-}, (table) => {
-	return {
-		idx_shareholding_bot_id: index("idx_shareholding_bot_id").using("btree", table.bot_id.asc().nullsLast().op("int4_ops")),
-		shareholding_bot_id_fkey: foreignKey({
-			columns: [table.bot_id],
-			foreignColumns: [bot.bot_id],
-			name: "shareholding_bot_id_fkey"
-		}),
-		shareholding_company_id_fkey: foreignKey({
-			columns: [table.company_id],
-			foreignColumns: [company.company_id],
-			name: "shareholding_company_id_fkey"
-		}),
-		shareholding_bot_id_company_id_key: unique("shareholding_bot_id_company_id_key").on(table.bot_id, table.company_id),
 	}
 });
 
@@ -227,6 +217,16 @@ export const price_history = pgTable("price_history", {
 			name: "price_history_exchange_id_fkey"
 		}),
 		price_history_company_id_timestamp_period_length_key: unique("price_history_company_id_timestamp_period_length_key").on(table.company_id, table.timestamp, table.period_length),
+	}
+});
+
+export const logs = pgTable("logs", {
+	id: serial().primaryKey().notNull(),
+	created_at: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
+	message: text().notNull(),
+}, (table) => {
+	return {
+		created_at_idx: index("logs_created_at_idx").using("btree", table.created_at.asc().nullsLast().op("timestamptz_ops")),
 	}
 });
 export const order_book = pgView("order_book", {	company_id: varchar({ length: 10 }),

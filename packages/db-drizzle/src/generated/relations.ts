@@ -1,38 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { bot, company, exchange, shareholding, order, order_type, order_status, trade, price_history } from "./schema";
-
-export const companyRelations = relations(company, ({one, many}) => ({
-	bot: one(bot, {
-		fields: [company.creator_bot_id],
-		references: [bot.bot_id]
-	}),
-	exchange: one(exchange, {
-		fields: [company.exchange_id],
-		references: [exchange.exchange_id]
-	}),
-	shareholdings: many(shareholding),
-	orders: many(order),
-	trades: many(trade),
-	price_histories: many(price_history),
-}));
-
-export const botRelations = relations(bot, ({many}) => ({
-	companies: many(company),
-	shareholdings: many(shareholding),
-	orders: many(order),
-	trades_buyer_bot_id: many(trade, {
-		relationName: "trade_buyer_bot_id_bot_bot_id"
-	}),
-	trades_seller_bot_id: many(trade, {
-		relationName: "trade_seller_bot_id_bot_bot_id"
-	}),
-}));
-
-export const exchangeRelations = relations(exchange, ({many}) => ({
-	companies: many(company),
-	trades: many(trade),
-	price_histories: many(price_history),
-}));
+import { bot, shareholding, company, exchange, order, order_type, order_status, trade, price_history } from "./schema";
 
 export const shareholdingRelations = relations(shareholding, ({one}) => ({
 	bot: one(bot, {
@@ -43,6 +10,39 @@ export const shareholdingRelations = relations(shareholding, ({one}) => ({
 		fields: [shareholding.company_id],
 		references: [company.company_id]
 	}),
+}));
+
+export const botRelations = relations(bot, ({many}) => ({
+	shareholdings: many(shareholding),
+	companies: many(company),
+	orders: many(order),
+	trades_buyer_bot_id: many(trade, {
+		relationName: "trade_buyer_bot_id_bot_bot_id"
+	}),
+	trades_seller_bot_id: many(trade, {
+		relationName: "trade_seller_bot_id_bot_bot_id"
+	}),
+}));
+
+export const companyRelations = relations(company, ({one, many}) => ({
+	shareholdings: many(shareholding),
+	bot: one(bot, {
+		fields: [company.creator_bot_id],
+		references: [bot.bot_id]
+	}),
+	exchange: one(exchange, {
+		fields: [company.exchange_id],
+		references: [exchange.exchange_id]
+	}),
+	orders: many(order),
+	trades: many(trade),
+	price_histories: many(price_history),
+}));
+
+export const exchangeRelations = relations(exchange, ({many}) => ({
+	companies: many(company),
+	trades: many(trade),
+	price_histories: many(price_history),
 }));
 
 export const orderRelations = relations(order, ({one, many}) => ({
