@@ -61,6 +61,17 @@ export interface DataTableProps<TData> {
   rowViewerContent?: React.ComponentType<{ item: TData }>
   pageSize?: number
   resetOnDataChange?: boolean
+  pagination?: { pageIndex: number; pageSize: number }
+  onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
+  search?: string
+  onSearch?: (search: string) => void
+  sorting?: SortingState
+  onSortingChange?: (sorting: SortingState) => void
+  rowCount?: number
+  emptyState?: {
+    title: string
+    subtitle: string
+  }
 }
 
 export function DataTable<TData>({
@@ -72,6 +83,14 @@ export function DataTable<TData>({
   searchableColumns = [],
   rowViewerContent: CellViewerContent,
   pageSize = 100,
+  pagination: externalPagination,
+  onPaginationChange,
+  search: externalSearch,
+  onSearch,
+  sorting: externalSorting,
+  onSortingChange,
+  rowCount,
+  emptyState,
 }: DataTableProps<TData>) {
   // Create the select column
   const selectColumn: ColumnDef<TData> = {
@@ -136,17 +155,57 @@ export function DataTable<TData>({
   // Combine the columns
   const allColumns = [...(showSelectColumn ? [selectColumn] : []), ...userColumns, actionsColumn]
 
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  // Use external state if provided, otherwise use internal state
+  const [internalSorting, setInternalSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [searchColumn, setSearchColumn] = React.useState<string>(
     searchableColumns.length > 0 ? String(searchableColumns[0]) : '',
   )
-  const [pagination, setPagination] = React.useState({
+  const [internalPagination, setInternalPagination] = React.useState({
     pageIndex: 0,
     pageSize: pageSize,
   })
+
+  // Use the external state if provided, otherwise use internal state
+  const sorting = externalSorting !== undefined ? externalSorting : internalSorting
+  const pagination = externalPagination !== undefined ? externalPagination : internalPagination
+
+  // Handle state changes
+  const handleSortingChange = React.useCallback(
+    (newSorting: SortingState) => {
+      if (onSortingChange) {
+        onSortingChange(newSorting)
+      } else {
+        setInternalSorting(newSorting)
+      }
+    },
+    [onSortingChange]
+  )
+
+  const handlePaginationChange = React.useCallback(
+    (newPagination: { pageIndex: number; pageSize: number }) => {
+      if (onPaginationChange) {
+        onPaginationChange(newPagination)
+      } else {
+        setInternalPagination(newPagination)
+      }
+    },
+    [onPaginationChange]
+  )
+
+  // Handle search input change
+  const handleSearchChange = React.useCallback(
+    (value: string) => {
+      if (onSearch) {
+        onSearch(value)
+      } else if (searchColumn) {
+        table.getColumn(searchColumn)?.setFilterValue(value)
+      }
+    },
+    [onSearch, searchColumn]
+  )
 
   // Validate that searchableColumns only contains valid column IDs
   React.useEffect(() => {
@@ -165,7 +224,7 @@ export function DataTable<TData>({
   const table = useReactTable({
     data,
     columns: allColumns,
-    onSortingChange: setSorting,
+    onSortingChange: handleSortingChange,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -173,7 +232,10 @@ export function DataTable<TData>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onPaginationChange: setPagination,
+    onPaginationChange: handlePaginationChange,
+    manualPagination: !!onPaginationChange,
+    manualSorting: !!onSortingChange,
+    pageCount: rowCount !== undefined ? Math.ceil(rowCount / pagination.pageSize) : undefined,
     state: {
       sorting,
       columnFilters,
@@ -214,10 +276,11 @@ export function DataTable<TData>({
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={`Search ${searchColumn}...`}
-                value={(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ''}
-                onChange={(event) =>
-                  table.getColumn(searchColumn)?.setFilterValue(event.target.value)
-                }
+                value={externalSearch !== undefined ? externalSearch : (table.getColumn(searchColumn)?.getFilterValue() as string) ?? ''}
+                onChange={(event) => {
+                  const value = event.target.value
+                  handleSearchChange(value)
+                }}
                 className="pl-8 max-w-sm"
               />
             </div>
@@ -302,7 +365,14 @@ export function DataTable<TData>({
             ) : (
               <TableRow>
                 <TableCell colSpan={allColumns.length} className="h-24 text-center">
-                  No results.
+                  {emptyState ? (
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <p className="text-lg font-medium">{emptyState.title}</p>
+                      <p className="text-sm text-muted-foreground">{emptyState.subtitle}</p>
+                    </div>
+                  ) : (
+                    "No results."
+                  )}
                 </TableCell>
               </TableRow>
             )}
