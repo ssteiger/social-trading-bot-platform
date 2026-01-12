@@ -38,6 +38,12 @@ npm run dev:db
 ```
 
 ```bash
+# prepare database
+cd apps/supabase
+supabase migration up
+```
+
+```bash
 # run bots locally
 npm run dev:bots
 ```

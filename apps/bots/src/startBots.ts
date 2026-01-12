@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { BotFactory, type TradingStrategy } from './bots-logic/TradingStrategy'
+import { createBot, type TradingStrategy } from './bots-logic/TradingStrategy'
 import { BotsManager } from './bots-logic/botsManager'
 import type { Database } from './types/supabase'
 
@@ -8,9 +8,10 @@ async function startBots(supabase: SupabaseClient<Database>) {
 
   // Create a bots manager instance
   const botsManager = new BotsManager(supabase)
+  const { botService, tradingService } = botsManager.getServices()
 
   // Get all bots from the database
-  const bots = await botsManager.getAllBots()
+  const bots = await botService.getAllBots()
 
   if (bots.length === 0) {
     console.warn('No bots found in the database!')
@@ -25,21 +26,21 @@ async function startBots(supabase: SupabaseClient<Database>) {
 
     // Assign strategies based on bot name/character
     if (bot.bot_name.includes('Dividend')) {
-      strategy = BotFactory.createBot('dividend', botsManager)
+      strategy = createBot('dividend', botsManager)
       console.log(`Assigned Dividend strategy to ${bot.bot_name}`)
     } else if (bot.bot_name.includes('Phoenix')) {
-      strategy = BotFactory.createBot('meanreversion', botsManager)
+      strategy = createBot('meanreversion', botsManager)
       console.log(`Assigned Mean Reversion strategy to ${bot.bot_name}`)
     } else if (bot.bot_name.includes('Master')) {
-      strategy = BotFactory.createBot('momentum', botsManager)
+      strategy = createBot('momentum', botsManager)
       console.log(`Assigned Momentum strategy to ${bot.bot_name}`)
     } else {
-      strategy = BotFactory.createBot('random', botsManager)
+      strategy = createBot('random', botsManager)
       console.log(`Assigned Random strategy to ${bot.bot_name}`)
     }
 
     // Start the bot with its strategy
-    botsManager.startTradingBot({
+    tradingService.startTradingBot({
       botId: bot.bot_id,
       strategyExecutionIntevalMs: 1000,
     }) // Check every 1 second
